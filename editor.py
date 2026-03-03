@@ -1,4 +1,5 @@
 import tkinter as tk
+from topMenu import TopMenu
 
 # colores
 TEMA_BG = '#1e1e1e'
@@ -15,6 +16,7 @@ class IDEEditor(tk.Tk):
         self.configure(bg=TEMA_BG)
         self._debounce_id = None
         self._iniciar_componentes()
+        self.menu=TopMenu(self, self.editor)
         
     def _iniciar_componentes(self):
         editor_frame = tk.Frame(self)

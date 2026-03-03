@@ -1,42 +1,12 @@
 import tkinter as tk
-from tkinter import ttk
 from tkinter import filedialog, messagebox
 
-class EditorTexto:
-    def __init__(self, root):
+class TopMenu:
+    def __init__(self, root, text_widget):
         self.root=root
-        self.root.title("Editor de texto")
-        self.root.geometry("800x600")
-
+        self.texto=text_widget
         self.ruta_archivo=None
-        self.crear_textArea()
         self.crear_menu()
-
-    def crear_textArea(self):
-        frame=tk.Frame(self.root)
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        #scroll
-        scroll_y=tk.Scrollbar(frame, orient="vertical")
-        scroll_y.pack(side="right", fill="y")
-        scroll_x=tk.Scrollbar(self.root, orient="horizontal")
-        scroll_x.pack(side="bottom", fill="x")
-
-        #text area
-        self.texto=tk.Text(frame, 
-                           wrap="none",
-                           yscrollcommand=scroll_y.set,
-                           xscrollcommand=scroll_x.set)
-        
-        #text crea un widget de texto multilinea
-        self.texto.pack(side="left", fill="both", expand=True)
-        #esto coloca el widget en la ventana, sus argumentos son
-        #para otorgarle propiedades de posicion
-
-        #conectar el text con los scrollbars
-        scroll_y.config(command=self.texto.yview)
-        scroll_x.config(command=self.texto.xview)
-
 
     def crear_menu(self):
         barraMenu=tk.Menu(self.root)
@@ -60,7 +30,6 @@ class EditorTexto:
         self.texto.delete(1.0, tk.END)
         #la ruta debe estar vacia porque el archivo es nuevo y aun no se guarda en ningun lugar
         self.ruta_archivo=None
-        self.root.title("Nuevo archivo")
 
     def abrirArchivo(self):
         #esto abre el explorador de archivos del sistema
@@ -81,7 +50,6 @@ class EditorTexto:
                 self.texto.insert(tk.END, contenido) #se inserta el contenido leido en el text area
 
             self.ruta_archivo=ruta #se guarda la ruta 
-            self.root.title(f"Editando - {ruta} ")
 
     def cerrarArchivo(self):
         #mensaje de si desea guardar
@@ -91,7 +59,6 @@ class EditorTexto:
         
         self.texto.delete(1.0, tk.END)
         self.ruta_archivo=None
-        self.root.title("Editor de texto")
 
     def guardarArchivo(self):
         #si el archivo ya tiene una ruta
@@ -118,19 +85,3 @@ class EditorTexto:
                 archivo.write(self.texto.get(1.0, tk.END))
 
         self.ruta_archivo=ruta #se guarda la nueva ruta
-        self.root.title({ruta})
-
-    def cerrarArchivo(self):
-        resp=messagebox.askyesno("Cerrar", "¿Deseas guardar antes de cerrar?")
-
-        if resp:
-            self.guardarArchivo()
-        
-        self.texto.delete(1.0, tk.END)
-        self.ruta_archivo=None
-        self.root.title("Editor de texto")
-
-if __name__=="__main__":
-    root=tk.Tk()
-    app=EditorTexto(root)
-    root.mainloop()
