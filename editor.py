@@ -1,5 +1,7 @@
 import tkinter as tk
 from topMenu import TopMenu
+from bottom_panel import BottomPanel
+from right_panel import RightPanel
 
 # colores
 TEMA_BG = '#1e1e1e'
@@ -12,7 +14,7 @@ class IDEEditor(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("IDE Editor")
-        self.geometry("900x700")
+        self.state('zoomed')
         self.configure(bg=TEMA_BG)
         self._debounce_id = None
         self._iniciar_componentes()
@@ -22,8 +24,12 @@ class IDEEditor(tk.Tk):
         self.main_container = tk.Frame(self)
         self.main_container.pack(fill=tk.BOTH, expand=True)
 
-        editor_frame = tk.Frame(self.main_container)
-        editor_frame.pack(fill=tk.BOTH, expand=True)
+        # Crear sección superior con editor y panel derecho
+        editor_section = tk.Frame(self.main_container)
+        editor_section.pack(fill=tk.BOTH, expand=True)
+
+        editor_frame = tk.Frame(editor_section)
+        editor_frame.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
         
         self.numero_lineas = tk.Text(editor_frame, width=4, padx=4, takefocus=0, border=0,
                                     background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG)
@@ -51,12 +57,16 @@ class IDEEditor(tk.Tk):
         self.editor.bind('<Button-5>', lambda e: self._actualizar_lineas())
         self.editor.bind('<KeyRelease>', lambda e: self._actualizar_lineas())
         
-        bar = tk.Frame(self, bg=TEMA_BG)
-        bar.pack(fill=tk.X)
-        
         # actualizar números de línea al escribir / cambiar tamaño / soltar botón
         self.editor.bind('<Configure>', lambda e: self._actualizar_lineas())
         self.editor.bind('<ButtonRelease-1>', lambda e: self._actualizar_lineas())
+        
+        # Panel lateral derecho
+        self.right_panel = RightPanel(editor_section)
+        
+        # Panel de tabs en la parte inferior
+        self.bottom_panel = BottomPanel(self.main_container)
+        
         self._actualizar_lineas()
         
     def _actualizar_lineas(self, event=None):
