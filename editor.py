@@ -19,7 +19,10 @@ class IDEEditor(tk.Tk):
         self.menu=TopMenu(self, self.editor)
         
     def _iniciar_componentes(self):
-        editor_frame = tk.Frame(self)
+        self.main_container = tk.Frame(self)
+        self.main_container.pack(fill=tk.BOTH, expand=True)
+
+        editor_frame = tk.Frame(self.main_container)
         editor_frame.pack(fill=tk.BOTH, expand=True)
         
         self.numero_lineas = tk.Text(editor_frame, width=4, padx=4, takefocus=0, border=0,

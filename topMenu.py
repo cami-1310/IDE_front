@@ -7,6 +7,7 @@ class TopMenu:
         self.texto=text_widget
         self.ruta_archivo=None
         self.crear_menu()
+        self.crear_toolbar()
 
     def crear_menu(self):
         barraMenu=tk.Menu(self.root)
@@ -15,14 +16,56 @@ class TopMenu:
         menu_archivo=tk.Menu(barraMenu, tearoff=0)
         barraMenu.add_cascade(label="Archivo", menu=menu_archivo)
 
+        menu_compilar=tk.Menu(barraMenu, tearoff=0)
+        barraMenu.add_cascade(label="Compilar", menu=menu_compilar)
+
+        #iconos de acceso rapido
+        self.icono_new=tk.PhotoImage(file="iconos/new_icon.png").subsample(20, 20)
+        self.icono_open=tk.PhotoImage(file="iconos/open_icon.png").subsample(20, 20)
+        self.icono_save=tk.PhotoImage(file="iconos/save_icon.png").subsample(20, 20)
+        self.icono_out=tk.PhotoImage(file="iconos/out_icon.png").subsample(20, 20)
+        self.icono_compile=tk.PhotoImage(file="iconos/compile_icon.png").subsample(20, 20)
+
         menu_archivo.add_command(label="Nuevo", command=self.nuevoArchivo)
+        menu_archivo.add_separator()
         menu_archivo.add_command(label="Abrir", command=self.abrirArchivo)
         menu_archivo.add_command(label="Cerrar", command=self.cerrarArchivo)
+        menu_archivo.add_separator()
         menu_archivo.add_command(label="Guardar", command=self.guardarArchivo)
         menu_archivo.add_command(label="Guardar como", command=self.guardarComo)
-        menu_archivo.add_command(label="Salir", command=self.root.quit)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir", command=self.salirIDE)
 
-    #funciones del editor
+        menu_compilar.add_command(label="Compilar", command=self.llamarCompilador)
+        menu_compilar.add_separator()
+        menu_compilar.add_command(label="Análisis léxico", command=self.mostrarAnalisisLexico)
+        menu_compilar.add_command(label="Análisis sintáctico", command=self.mostrarAnalisisSintactico)
+        menu_compilar.add_command(label="Análisis semántico", command=self.mostrarAnalisisSemantico)
+        menu_compilar.add_separator()
+        menu_compilar.add_command(label="Generación de código intermedio", command=self.mostrarCodigoIntermedio)
+     
+    #toolbar para el acceso rapido con iconos
+    def crear_toolbar(self):
+        toolbar=tk.Frame(self.root, bd=0, bg='#1e1e1e', relief=tk.RAISED)
+
+        btn_new=tk.Button(toolbar, image=self.icono_new, command=self.nuevoArchivo)
+        btn_new.pack(side=tk.LEFT, padx=2, pady=2)
+
+        btn_open=tk.Button(toolbar, image=self.icono_open, command=self.abrirArchivo)
+        btn_open.pack(side=tk.LEFT, padx=2, pady=2)
+
+        btn_save=tk.Button(toolbar, image=self.icono_save, command=self.guardarArchivo)
+        btn_save.pack(side=tk.LEFT, padx=2, pady=2)
+
+        btn_out=tk.Button(toolbar, image=self.icono_out, command=self.cerrarArchivo)
+        btn_out.pack(side=tk.LEFT, padx=2, pady=2)
+
+        btn_compile=tk.Button(toolbar, image=self.icono_compile, command=self.llamarCompilador)
+        btn_compile.pack(side=tk.LEFT, padx=2, pady=2)
+
+        toolbar.pack(side=tk.TOP, fill=tk.X, before=self.root.winfo_children()[0], padx=5, pady=5)
+
+    #funciones del gestor de archivo
     def nuevoArchivo(self):
         #esto elimmina todo el contenido del text area
         #1.0 significa linea 1 caracter 0
@@ -42,18 +85,23 @@ class TopMenu:
 
         #si el usuario selecciono un archivo
         if ruta:
-            #se abre el archivo en modo lectura (r)
-            #encoding utf-8 evita problemas con acentos
-            with open(ruta, "r", encoding="utf-8") as archivo:
-                contenido=archivo.read() #contenido guarda todo lo que se leyó del archivo
+            #se abre el archivo en modo lectura
+            try:
+                contenido=self.leerArchivo(ruta) #contenido guarda todo lo que se leyó del archivo
                 self.texto.delete(1.0, tk.END) #se limpia el text area
                 self.texto.insert(tk.END, contenido) #se inserta el contenido leido en el text area
-
-            self.ruta_archivo=ruta #se guarda la ruta 
+                self.ruta_archivo=ruta #se guarda la ruta 
+            except ValueError as e:
+                messagebox.showerror("Error", str(e))
+                return
+            except Exception as e:
+                #para cualquier otro error con el archivo
+                messagebox.showerror("Error", f"No se pudo abrir el archivo:\n{e}")
+                return
 
     def cerrarArchivo(self):
         #mensaje de si desea guardar
-        resp=messagebox.askyesno("Cerrar", "¿Deseas guardar antes de cerrar?")
+        resp=messagebox.askyesno("Cerrar", "¿Deseas guardar el archivo antes de cerrarlo?")
         if resp:
             self.guardarArchivo()
         
@@ -85,3 +133,45 @@ class TopMenu:
                 archivo.write(self.texto.get(1.0, tk.END))
 
         self.ruta_archivo=ruta #se guarda la nueva ruta
+
+    def salirIDE(self):
+        resp=messagebox.askyesnocancel("Salir", "¿Deseas guardar antes de salir?")
+        if resp is True:
+            self.guardarArchivo()
+            self.root.quit()
+        elif resp is False:
+            self.root.quit()
+        #si no elige ninguna es porque dio cancelar
+
+    def leerArchivo(self, ruta):
+        #intenta leer el archivo en base a varios encodings 
+        for enc in ("utf-8", "cp1252", "latin-1"):
+            try:
+                with open(ruta, "r", encoding=enc) as archivo:
+                    contenido=archivo.read()
+                    return contenido
+            except UnicodeDecodeError:
+                continue
+        #raise "sube" el error hasta el try catch de la funcion abrirArchivo
+        raise ValueError("No se pudo determinar la codificación del archivo.")
+    
+    #funciones del menu de compilador
+    def llamarCompilador(self):
+        #por definir
+        pass
+
+    def mostrarAnalisisLexico(self):
+        #por definir
+        pass
+
+    def mostrarAnalisisSintactico(self):
+        #por definir
+        pass
+
+    def mostrarAnalisisSemantico(self):
+        #por definir
+        pass
+
+    def mostrarCodigoIntermedio(self):
+        #por definir
+        pass
