@@ -57,18 +57,50 @@ class IDEEditor(tk.Tk):
         self.editor.bind('<Button-5>', lambda e: self._actualizar_lineas())
         self.editor.bind('<KeyRelease>', lambda e: self._actualizar_lineas())
         
+        # actualizar barra de estado
+        self.editor.bind('<KeyRelease>', lambda e: self._actualizar_barra_estado(), add='+')
+        self.editor.bind('<ButtonRelease-1>', lambda e: self._actualizar_barra_estado(), add='+')
+        self.editor.bind('<Motion>', lambda e: self._actualizar_barra_estado(), add='+')
+        
         # actualizar números de línea al escribir / cambiar tamaño / soltar botón
         self.editor.bind('<Configure>', lambda e: self._actualizar_lineas())
         self.editor.bind('<ButtonRelease-1>', lambda e: self._actualizar_lineas())
         
         # Panel lateral derecho
         self.right_panel = RightPanel(editor_section)
-        
+    
         # Panel de tabs en la parte inferior
         self.bottom_panel = BottomPanel(self.main_container)
         
-        self._actualizar_lineas()
+        # Barra de estado
+        self._crear_barra_estado()
         
+        self._actualizar_lineas()
+        self._actualizar_barra_estado()
+        
+    def _crear_barra_estado(self):
+        self.status_bar = tk.Frame(self.main_container, bg=TEMA_LINES_BG, height=25)
+        self.status_bar.pack(fill=tk.X, side=tk.BOTTOM)
+        self.status_bar.pack_propagate(False)
+        
+        # Label para mostrar información del cursor
+        self.status_label = tk.Label(self.status_bar, text="Línea: 1, Columna: 1", 
+                                   bg=TEMA_LINES_BG, fg=TEMA_FG, anchor='w', padx=10)
+        self.status_label.pack(fill=tk.BOTH, expand=True)
+        
+    def _actualizar_barra_estado(self, event=None):
+        try:
+            # Obtener la posición del cursor
+            cursor_pos = self.editor.index(tk.INSERT)
+            linea, columna = cursor_pos.split('.')
+            linea = int(linea)
+            columna = int(columna) + 1  # Las columnas empiezan en 0, pero mostramos desde 1
+            
+            # Actualizar el label
+            self.status_label.config(text=f"Línea: {linea}, Columna: {columna}")
+        except Exception:
+            self.status_label.config(text="Línea: 1, Columna: 1")
+            
     def _actualizar_lineas(self, event=None):
         try:
             contador_lineas = int(self.editor.index('end-1c').split('.')[0])
