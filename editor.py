@@ -38,18 +38,26 @@ class IDEEditor(tk.Tk):
         text_area = tk.Frame(editor_frame, background=TEMA_BG)
         text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        vscrollbar = tk.Scrollbar(text_area)
+        # Frame para contener el editor y scrollbars
+        editor_scrollbar_frame = tk.Frame(text_area, background=TEMA_BG)
+        editor_scrollbar_frame.pack(fill=tk.BOTH, expand=True)
+
+        vscrollbar = tk.Scrollbar(editor_scrollbar_frame, orient=tk.VERTICAL)
         vscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # sincronizar scrollbar
+        hscrollbar = tk.Scrollbar(editor_scrollbar_frame, orient=tk.HORIZONTAL)
+        hscrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # sincronizar scrollbar vertical
         def _on_editor_scroll(first, last):
             vscrollbar.set(first, last)
             self.numero_lineas.yview_moveto(first)
             return None
 
-        self.editor = tk.Text(text_area, wrap=tk.NONE, undo=True, yscrollcommand=_on_editor_scroll, background=TEMA_BG, foreground=TEMA_FG, insertbackground=TEMA_CURSOR)
+        self.editor = tk.Text(editor_scrollbar_frame, wrap=tk.NONE, undo=True, yscrollcommand=_on_editor_scroll, xscrollcommand=hscrollbar.set, background=TEMA_BG, foreground=TEMA_FG, insertbackground=TEMA_CURSOR)
         self.editor.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         vscrollbar.config(command=lambda *args: (self.editor.yview(*args), self.numero_lineas.yview(*args)))
+        hscrollbar.config(command=self.editor.xview)
         
         # actualizar números de línea
         self.editor.bind('<MouseWheel>', lambda e: self._actualizar_lineas())
