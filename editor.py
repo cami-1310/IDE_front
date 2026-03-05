@@ -2,6 +2,8 @@ import tkinter as tk
 from topMenu import TopMenu
 from bottom_panel import BottomPanel
 from right_panel import RightPanel
+import threading
+import time
 
 # colores
 TEMA_BG = '#1e1e1e'
@@ -17,8 +19,22 @@ class IDEEditor(tk.Tk):
         self.state('zoomed')
         self.configure(bg=TEMA_BG)
         self._debounce_id = None
+        
+        # Variables para el hilo de actualización
+        self._actualizar_activo = True
+        self._lineas_anteriores = 0
+        self._linea_anterior = 0
+        self._columna_anterior = 0
+        
         self._iniciar_componentes()
         self.menu=TopMenu(self, self.editor)
+        
+        # Iniciar hilo de actualización continua
+        self._hilo_actualizar = threading.Thread(target=self._hilo_actualizar_lineas, daemon=True)
+        self._hilo_actualizar.start()
+        
+        # Cerrar el hilo cuando se cierre la ventana
+        self.protocol("WM_DELETE_WINDOW", self._on_closing)
         
     def _iniciar_componentes(self):
         self.main_container = tk.Frame(self)
@@ -34,6 +50,9 @@ class IDEEditor(tk.Tk):
         self.numero_lineas = tk.Text(editor_frame, width=4, padx=4, takefocus=0, border=0,
                                     background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG)
         self.numero_lineas.pack(side=tk.LEFT, fill=tk.Y)
+        
+        # Configurar etiqueta para resaltar la línea actual
+        self.numero_lineas.tag_config('linea_actual', foreground='#ffffff', background='#404040')
         
         text_area = tk.Frame(editor_frame, background=TEMA_BG)
         text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -64,15 +83,7 @@ class IDEEditor(tk.Tk):
         self.editor.bind('<Button-4>', lambda e: self._actualizar_lineas())
         self.editor.bind('<Button-5>', lambda e: self._actualizar_lineas())
         self.editor.bind('<KeyRelease>', lambda e: self._actualizar_lineas())
-        
-        # actualizar barra de estado
-        self.editor.bind('<KeyRelease>', lambda e: self._actualizar_barra_estado(), add='+')
-        self.editor.bind('<ButtonRelease-1>', lambda e: self._actualizar_barra_estado(), add='+')
-        self.editor.bind('<Motion>', lambda e: self._actualizar_barra_estado(), add='+')
-        
-        # actualizar números de línea al escribir / cambiar tamaño / soltar botón
-        self.editor.bind('<Configure>', lambda e: self._actualizar_lineas())
-        self.editor.bind('<ButtonRelease-1>', lambda e: self._actualizar_lineas())
+        self.editor.bind('<Key>', lambda e: self._actualizar_lineas())
         
         # Panel lateral derecho
         self.right_panel = RightPanel(editor_section)
@@ -114,11 +125,78 @@ class IDEEditor(tk.Tk):
             contador_lineas = int(self.editor.index('end-1c').split('.')[0])
         except Exception:
             contador_lineas = 1
+        
         lineas_texto = "\n".join(str(i) for i in range(1, contador_lineas + 1))
         self.numero_lineas.config(state='normal')
         self.numero_lineas.delete('1.0', tk.END)
         self.numero_lineas.insert('1.0', lineas_texto)
         self.numero_lineas.config(state='disabled')
+
+        # Restaurar la posición de scroll para que coincida con el editor
+        first, _ = self.editor.yview()
+        self.numero_lineas.yview_moveto(first)
+
+        # Resaltar la línea actual después de actualizar
+        self._resaltar_linea_actual()
+    
+    def _resaltar_linea_actual(self):
+        """Resalta solo la línea actual sin regenerar los números"""
+        try:
+            cursor_linea = int(self.editor.index(tk.INSERT).split('.')[0])
+            
+            # Remover resaltado anterior
+            self.numero_lineas.tag_remove('linea_actual', '1.0', tk.END)
+            
+            # Aplicar resaltado a la línea actual
+            linea_inicio = f'{cursor_linea}.0'
+            linea_fin = f'{cursor_linea}.end'
+            
+            self.numero_lineas.config(state='normal')
+            self.numero_lineas.tag_add('linea_actual', linea_inicio, linea_fin)
+            self.numero_lineas.config(state='disabled')
+        except Exception:
+            pass
+    
+    def _hilo_actualizar_lineas(self):
+        """Hilo que actualiza las líneas y la barra de estado continuamente"""
+        while self._actualizar_activo:
+            try:
+                # Obtener información actual del editor
+                contador_lineas = int(self.editor.index('end-1c').split('.')[0])
+                cursor_pos = self.editor.index(tk.INSERT)
+                cursor_linea, columna = cursor_pos.split('.')
+                cursor_linea = int(cursor_linea)
+                columna = int(columna) + 1
+                
+                # Si cambió el número de líneas, actualizar todo
+                if self._lineas_anteriores != contador_lineas:
+                    self._lineas_anteriores = contador_lineas
+                    self.after(0, self._actualizar_lineas)
+                
+                # Si cambió la línea o columna del cursor
+                if (self._linea_anterior != cursor_linea or 
+                    self._columna_anterior != columna):
+                    
+                    self._linea_anterior = cursor_linea
+                    self._columna_anterior = columna
+                    
+                    # Solo resaltar la línea y actualizar barra de estado
+                    self.after(0, self._resaltar_linea_actual)
+                    self.after(0, self._actualizar_barra_estado)
+                    
+            except Exception:
+                pass
+            
+            # Pequeña pausa para no consumir CPU
+            time.sleep(0.05)
+    
+    def _on_closing(self):
+        """Detener el hilo y cerrar la aplicación"""
+        self._actualizar_activo = False
+        # Esperar a que el hilo termine
+        if hasattr(self, '_hilo_actualizar'):
+            self._hilo_actualizar.join(timeout=1)
+        self.destroy()
             
 if __name__ == "__main__":
     IDEEditor().mainloop()
