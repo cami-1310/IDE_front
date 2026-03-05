@@ -19,6 +19,13 @@ class TopMenu:
         menu_compilar=tk.Menu(barraMenu, tearoff=0)
         barraMenu.add_cascade(label="Compilar", menu=menu_compilar)
 
+        #iconos de acceso rapido
+        self.icono_new=tk.PhotoImage(file="iconos/new_icon.png").subsample(20, 20)
+        self.icono_open=tk.PhotoImage(file="iconos/open_icon.png").subsample(20, 20)
+        self.icono_save=tk.PhotoImage(file="iconos/save_icon.png").subsample(20, 20)
+        self.icono_out=tk.PhotoImage(file="iconos/out_icon.png").subsample(20, 20)
+        self.icono_compile=tk.PhotoImage(file="iconos/compile_icon.png").subsample(20, 20)
+
         menu_archivo.add_command(label="Nuevo", command=self.nuevoArchivo)
         menu_archivo.add_separator()
         menu_archivo.add_command(label="Abrir", command=self.abrirArchivo)
@@ -41,19 +48,19 @@ class TopMenu:
     def crear_toolbar(self):
         toolbar=tk.Frame(self.root, bd=0, bg='#1e1e1e', relief=tk.RAISED)
 
-        btn_new=tk.Button(toolbar, text="📄", command=self.nuevoArchivo, font=("Arial", 12), bg='#1e1e1e', fg='#ffffff', activebackground='#2d2d2d', activeforeground='#ffffff', relief=tk.FLAT, padx=2, pady=2, highlightthickness=0, bd=0)
+        btn_new=tk.Button(toolbar, image=self.icono_new, command=self.nuevoArchivo)
         btn_new.pack(side=tk.LEFT, padx=2, pady=2)
 
-        btn_open=tk.Button(toolbar, text="📂", command=self.abrirArchivo, font=("Arial", 12), bg='#1e1e1e', fg='#ffffff', activebackground='#2d2d2d', activeforeground='#ffffff', relief=tk.FLAT, padx=2, pady=2, highlightthickness=0, bd=0)
+        btn_open=tk.Button(toolbar, image=self.icono_open, command=self.abrirArchivo)
         btn_open.pack(side=tk.LEFT, padx=2, pady=2)
 
-        btn_save=tk.Button(toolbar, text="💾", command=self.guardarArchivo, font=("Arial", 12), bg='#1e1e1e', fg='#ffffff', activebackground='#2d2d2d', activeforeground='#ffffff', relief=tk.FLAT, padx=2, pady=2, highlightthickness=0, bd=0)
+        btn_save=tk.Button(toolbar, image=self.icono_save, command=self.guardarArchivo)
         btn_save.pack(side=tk.LEFT, padx=2, pady=2)
 
-        btn_out=tk.Button(toolbar, text="❌", command=self.cerrarArchivo, font=("Arial", 12), bg='#1e1e1e', fg='#ffffff', activebackground='#2d2d2d', activeforeground='#ffffff', relief=tk.FLAT, padx=2, pady=2, highlightthickness=0, bd=0)
+        btn_out=tk.Button(toolbar, image=self.icono_out, command=self.cerrarArchivo)
         btn_out.pack(side=tk.LEFT, padx=2, pady=2)
 
-        btn_compile=tk.Button(toolbar, text="▶️", command=self.llamarCompilador, font=("Arial", 12), bg='#1e1e1e', fg='#ffffff', activebackground='#2d2d2d', activeforeground='#ffffff', relief=tk.FLAT, padx=2, pady=2, highlightthickness=0, bd=0)
+        btn_compile=tk.Button(toolbar, image=self.icono_compile, command=self.llamarCompilador)
         btn_compile.pack(side=tk.LEFT, padx=2, pady=2)
 
         toolbar.pack(side=tk.TOP, fill=tk.X, before=self.root.winfo_children()[0], padx=5, pady=5)

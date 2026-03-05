@@ -36,7 +36,7 @@ class BottomPanel:
                                     wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
         
         # Agregar los tabs al notebook
-        self.tabs_notebook.add(self.tab_errores_lexicos, text="Errores Lexicos")
-        self.tabs_notebook.add(self.tab_errores_sintacticos, text="Errores sintacticos")
-        self.tabs_notebook.add(self.tab_errores_semanticos, text="Errores semanticos")
+        self.tabs_notebook.add(self.tab_errores_lexicos, text="Errores Léxicos")
+        self.tabs_notebook.add(self.tab_errores_sintacticos, text="Errores Sintácticos")
+        self.tabs_notebook.add(self.tab_errores_semanticos, text="Errores Semánticos")
         self.tabs_notebook.add(self.tab_resultados, text="Resultados")

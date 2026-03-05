@@ -38,8 +38,8 @@ class RightPanel:
                                     wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
         
         # Agregar los tabs al notebook
-        self.tabs_notebook.add(self.tab_lexico, text="Lexico")
-        self.tabs_notebook.add(self.tab_sintactico, text="Sintactico")
-        self.tabs_notebook.add(self.tab_semantico, text="Semantico")
+        self.tabs_notebook.add(self.tab_lexico, text="Léxico")
+        self.tabs_notebook.add(self.tab_sintactico, text="Sintáctico")
+        self.tabs_notebook.add(self.tab_semantico, text="Semántico")
         self.tabs_notebook.add(self.tab_hash_table, text="Tabla de Hash")
         self.tabs_notebook.add(self.tab_codigo_intermedio, text="Código Intermedio")
