@@ -57,15 +57,12 @@ class IDEEditor(tk.Tk):
         text_area = tk.Frame(editor_frame, background=TEMA_BG)
         text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Frame para contener el editor y scrollbars
-        editor_scrollbar_frame = tk.Frame(text_area, background=TEMA_BG)
-        editor_scrollbar_frame.pack(fill=tk.BOTH, expand=True)
+        # Frame para el editor con scroll vertical
+        editor_vscroll_frame = tk.Frame(text_area, background=TEMA_BG)
+        editor_vscroll_frame.pack(fill=tk.BOTH, expand=True)
 
-        vscrollbar = tk.Scrollbar(editor_scrollbar_frame, orient=tk.VERTICAL)
+        vscrollbar = tk.Scrollbar(editor_vscroll_frame, orient=tk.VERTICAL)
         vscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        hscrollbar = tk.Scrollbar(editor_scrollbar_frame, orient=tk.HORIZONTAL)
-        hscrollbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         # sincronizar scrollbar vertical
         def _on_editor_scroll(first, last):
@@ -73,10 +70,24 @@ class IDEEditor(tk.Tk):
             self.numero_lineas.yview_moveto(first)
             return None
 
-        self.editor = tk.Text(editor_scrollbar_frame, wrap=tk.NONE, undo=True, yscrollcommand=_on_editor_scroll, xscrollcommand=hscrollbar.set, background=TEMA_BG, foreground=TEMA_FG, insertbackground=TEMA_CURSOR)
+        self.editor = tk.Text(editor_vscroll_frame, wrap=tk.NONE, undo=True, yscrollcommand=_on_editor_scroll, xscrollcommand=self._on_hscroll, background=TEMA_BG, foreground=TEMA_FG, insertbackground=TEMA_CURSOR)
         self.editor.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         vscrollbar.config(command=lambda *args: (self.editor.yview(*args), self.numero_lineas.yview(*args)))
-        hscrollbar.config(command=self.editor.xview)
+        
+        # Placeholder para scrollbar horizontal
+        self.hscrollbar = None
+        
+        # Panel lateral derecho
+        self.right_panel = RightPanel(editor_section)
+        
+        # Frame SEPARADO para el scrollbar horizontal (fuera del editor)
+        hscrollbar_container = tk.Frame(self.main_container, background=TEMA_BG, height=15)
+        hscrollbar_container.pack(fill=tk.X, side=tk.TOP)
+        hscrollbar_container.pack_propagate(False)
+        
+        self.hscrollbar = tk.Scrollbar(hscrollbar_container, orient=tk.HORIZONTAL)
+        self.hscrollbar.pack(fill=tk.X, expand=True)
+        self.hscrollbar.config(command=self.editor.xview)
         
         # actualizar números de línea
         self.editor.bind('<MouseWheel>', lambda e: self._actualizar_lineas())
@@ -84,9 +95,6 @@ class IDEEditor(tk.Tk):
         self.editor.bind('<Button-5>', lambda e: self._actualizar_lineas())
         self.editor.bind('<KeyRelease>', lambda e: self._actualizar_lineas())
         self.editor.bind('<Key>', lambda e: self._actualizar_lineas())
-        
-        # Panel lateral derecho
-        self.right_panel = RightPanel(editor_section)
     
         # Panel de tabs en la parte inferior
         self.bottom_panel = BottomPanel(self.main_container)
@@ -96,6 +104,11 @@ class IDEEditor(tk.Tk):
         
         self._actualizar_lineas()
         self._actualizar_barra_estado()
+    
+    def _on_hscroll(self, first, last):
+        """Callback para el scrollbar horizontal"""
+        if self.hscrollbar:
+            self.hscrollbar.set(first, last)
         
     def _crear_barra_estado(self):
         self.status_bar = tk.Frame(self.main_container, bg=TEMA_LINES_BG, height=25)
