@@ -89,7 +89,8 @@ class TopMenu:
             try:
                 contenido=self.leerArchivo(ruta) #contenido guarda todo lo que se leyó del archivo
                 self.texto.delete(1.0, tk.END) #se limpia el text area
-                self.texto.insert(tk.END, contenido) #se inserta el contenido leido en el text area
+                self.texto.insert("end-1c", contenido) #se inserta el contenido leido en el text area
+                self.texto.mark_set(tk.INSERT, "end-1c") #colocamos el cursor al final del texto
                 self.ruta_archivo=ruta #se guarda la ruta 
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
@@ -113,7 +114,7 @@ class TopMenu:
         if self.ruta_archivo:
             #se abre en modo escritura (w)
             with open(self.ruta_archivo, "w", encoding="utf-8") as archivo:
-                archivo.write(self.texto.get(1.0, tk.END)) #se escribe el archivo con el contenido del text area
+                archivo.write(self.texto.get(1.0, "end-1c")) #se escribe el archivo con el contenido del text area
         else: 
             #si no tiene ruta, hay que guardar como
             self.guardarComo()
@@ -130,9 +131,8 @@ class TopMenu:
         if ruta:
             #se crea o sobreescribe el archivo
             with open(ruta, "w", encoding="utf-8") as archivo:
-                archivo.write(self.texto.get(1.0, tk.END))
-
-        self.ruta_archivo=ruta #se guarda la nueva ruta
+                archivo.write(self.texto.get(1.0, "end-1c"))
+            self.ruta_archivo=ruta #se guarda la nueva ruta
 
     def salirIDE(self):
         resp=messagebox.askyesnocancel("Salir", "¿Deseas guardar antes de salir?")
