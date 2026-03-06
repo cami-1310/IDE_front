@@ -102,7 +102,7 @@ class TopMenu:
 
     def cerrarArchivo(self):
         #mensaje de si desea guardar
-        resp=messagebox.askyesno("Cerrar", "¿Deseas guardar el archivo antes de cerrarlo?")
+        resp=messagebox.askyesno("Cerrar", "¿Deseas guardar los cambios en el archivo antes de cerrarlo?")
         if resp:
             self.guardarArchivo()
         
