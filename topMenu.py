@@ -1,11 +1,17 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import os
+from getToken import Token, TokenType
+from bottom_panel import BottomPanel
 
 class TopMenu:
-    def __init__(self, root, text_widget):
+    def __init__(self, root, text_widget, bottom_panel=None, right_panel=None):
         self.root=root
         self.texto=text_widget
+        self.bottom_panel=bottom_panel
+        self.right_panel=right_panel
         self.ruta_archivo=None
+        self.scanner=Token(self.root, self.texto, self.bottom_panel) #para poder llamar a getToken
         self.crear_menu()
         self.crear_toolbar()
 
@@ -158,10 +164,11 @@ class TopMenu:
     #funciones del menu de compilador
     def llamarCompilador(self):
         #por definir
-        pass
+        self.analizadorLexico()
 
     def mostrarAnalisisLexico(self):
         #por definir
+        self.analizadorLexico()
         pass
 
     def mostrarAnalisisSintactico(self):
@@ -175,3 +182,41 @@ class TopMenu:
     def mostrarCodigoIntermedio(self):
         #por definir
         pass
+
+    #funcion para llamar al scanner (analizador lexico)
+    #cuando se compile y en el analisis lexico
+    def analizadorLexico(self):
+        #limpiar seccion antes del analisis
+        if(self.bottom_panel):
+            self.bottom_panel.clean_errores_lexicos()
+        if(self.right_panel):
+            self.right_panel.clean_analisis_lexico()
+
+        self.scanner.cargarCodigo()
+
+        #construimos ruta para el archivo para guardar los tokens
+        if(self.ruta_archivo):
+            carpeta=os.path.dirname(self.ruta_archivo)
+            nombre=os.path.splitext(os.path.basename(self.ruta_archivo))[0]
+            ruta_tokens=os.path.join(carpeta, f"tokens_{nombre}.txt")
+        else:
+            #es porque no hay ruta, porque el archivo es nuevo, no se ha guardado nunca
+            ruta_tokens="tokens_nuevo.txt"
+
+        #escanear y guardar en el archivo
+        with open(ruta_tokens, "w", encoding="utf-8") as archivo_tokens:
+            while True:
+                token=self.scanner.getToken()
+                print(token) #ver en consola
+                archivo_tokens.write(str(token)+'\n') #mandando al archivo
+                #enfile significa ya termino de ver el archivo, hay que salir del loop
+                if(token.tipo==TokenType.endfile):
+                    break
+        
+        #leer el archivo y mostrar en la seccion correspondiente
+        if(self.right_panel):
+            with open(ruta_tokens, "r", encoding="utf-8") as archivo_tokens:
+                contenido=archivo_tokens.read()
+            self.right_panel.mostrar_analisis_lexico(contenido)
+            #cambiar al tab lexico automaticamente
+            self.right_panel.tabs_notebook.select(self.right_panel.tab_lexico)

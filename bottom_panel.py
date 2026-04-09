@@ -40,3 +40,16 @@ class BottomPanel:
         self.tabs_notebook.add(self.tab_errores_sintacticos, text="Errores Sintácticos")
         self.tabs_notebook.add(self.tab_errores_semanticos, text="Errores Semánticos")
         self.tabs_notebook.add(self.tab_resultados, text="Resultados")
+
+    def add_error_lexico(self, mensaje):
+        #se añade el error lexico a la seccion correspondiente
+        self.tab_errores_lexicos.config(state='normal')
+        self.tab_errores_lexicos.insert(tk.END, mensaje + "\n")
+        self.tab_errores_lexicos.config(state='disabled')
+        self.tab_errores_lexicos.see(tk.END)
+
+    def clean_errores_lexicos(self):
+        #limpiar la seccion en cada analisis
+        self.tab_errores_lexicos.config(state='normal')
+        self.tab_errores_lexicos.delete('1.0', tk.END)
+        self.tab_errores_lexicos.config(state='disabled')

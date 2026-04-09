@@ -27,7 +27,7 @@ class IDEEditor(tk.Tk):
         self._columna_anterior = 0
         
         self._iniciar_componentes()
-        self.menu=TopMenu(self, self.editor)
+        self.menu=TopMenu(self, self.editor, self.bottom_panel, self.right_panel)
         
         # Iniciar hilo de actualización continua
         self._hilo_actualizar = threading.Thread(target=self._hilo_actualizar_lineas, daemon=True)

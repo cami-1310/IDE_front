@@ -43,3 +43,15 @@ class RightPanel:
         self.tabs_notebook.add(self.tab_semantico, text="Semántico")
         self.tabs_notebook.add(self.tab_hash_table, text="Tabla de Hash")
         self.tabs_notebook.add(self.tab_codigo_intermedio, text="Código Intermedio")
+
+    def mostrar_analisis_lexico(self, contenido):
+        self.tab_lexico.config(state='normal')
+        self.tab_lexico.delete('1.0', tk.END)
+        self.tab_lexico.insert(tk.END, contenido)
+        self.tab_lexico.config(state='disabled')
+        self.tab_lexico.see('1.0')
+
+    def clean_analisis_lexico(self):
+        self.tab_lexico.config(state='normal')
+        self.tab_lexico.delete('1.0', tk.END)
+        self.tab_lexico.config(state='disabled')
