@@ -163,13 +163,10 @@ class TopMenu:
     
     #funciones del menu de compilador
     def llamarCompilador(self):
-        #por definir
         self.analizadorLexico()
 
     def mostrarAnalisisLexico(self):
-        #por definir
         self.analizadorLexico()
-        pass
 
     def mostrarAnalisisSintactico(self):
         #por definir
@@ -207,7 +204,7 @@ class TopMenu:
         with open(ruta_tokens, "w", encoding="utf-8") as archivo_tokens:
             while True:
                 token=self.scanner.getToken()
-                print(token) #ver en consola
+                #print(token) #ver en consola
                 archivo_tokens.write(str(token)+'\n') #mandando al archivo
                 #enfile significa ya termino de ver el archivo, hay que salir del loop
                 if(token.tipo==TokenType.endfile):

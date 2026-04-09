@@ -1,4 +1,4 @@
-#Funcion que se encargara de tokenizar
+#Todo este archivo se encarga de tokenizar
 
 from enum import Enum, auto
 
@@ -50,8 +50,8 @@ class TokenType(Enum):
     #operdores aritmeticos
     suma=auto()
     resta=auto()
-    mult=auto()
-    div=auto()
+    multiplicacion=auto()
+    division=auto()
     modulo=auto()
     potencia=auto()
     incremento=auto()
@@ -67,8 +67,8 @@ class TokenType(Enum):
     opOr=auto()
     opNot=auto()
     #simbolos especiales
-    parDer=auto()
-    parIzq=auto()
+    parentesisDer=auto()
+    parentesisIzq=auto()
     llaveDer=auto()
     llaveIzq=auto()
     coma=auto()
@@ -182,13 +182,13 @@ class Token:
                 else:
                     #{|}|(|)|,|;|*|^|%
                     estado=Estado.hecho
-                    if(c=='('): tokenActual=TokenType.parIzq
-                    elif(c==')'): tokenActual=TokenType.parDer
+                    if(c=='('): tokenActual=TokenType.parentesisIzq
+                    elif(c==')'): tokenActual=TokenType.parentesisDer
                     elif(c=='{'): tokenActual=TokenType.llaveIzq
                     elif(c=='}'): tokenActual=TokenType.llaveDer
                     elif(c==','): tokenActual=TokenType.coma
                     elif(c==';'): tokenActual=TokenType.puntoComa
-                    elif(c=='*'): tokenActual=TokenType.mult
+                    elif(c=='*'): tokenActual=TokenType.multiplicacion
                     elif(c=='^'): tokenActual=TokenType.potencia
                     elif(c=='%'): tokenActual=TokenType.modulo
                     else:
@@ -261,7 +261,7 @@ class Token:
                         self.regresarC()
                     #si despues de la / viene otro caracter debería ser division
                     lexema='/'
-                    tokenActual=TokenType.div
+                    tokenActual=TokenType.division
                     estado=Estado.hecho
             
             #comentario de una sola linea
@@ -425,10 +425,9 @@ class Token:
 
     def reportarError(self, mensaje, linea, columna):
         texto_error=f"[Error léxico] L{linea}:C{columna} → {mensaje}"
-        print(texto_error)
+        #print(texto_error)
         if self.bottom_panel:
             try:
-                self.bottom_panel.agregar_error(texto_error)
+                self.bottom_panel.add_error_lexico(texto_error)
             except Exception:
                 pass
-            

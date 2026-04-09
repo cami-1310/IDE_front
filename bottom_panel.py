@@ -44,7 +44,8 @@ class BottomPanel:
     def add_error_lexico(self, mensaje):
         #se añade el error lexico a la seccion correspondiente
         self.tab_errores_lexicos.config(state='normal')
-        self.tab_errores_lexicos.insert(tk.END, mensaje + "\n")
+        self.tab_errores_lexicos.tag_config('error', foreground='#ff5555')
+        self.tab_errores_lexicos.insert(tk.END, mensaje + "\n", 'error')
         self.tab_errores_lexicos.config(state='disabled')
         self.tab_errores_lexicos.see(tk.END)
 
