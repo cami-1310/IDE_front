@@ -79,6 +79,11 @@ class TopMenu:
         self.texto.delete(1.0, tk.END)
         #la ruta debe estar vacia porque el archivo es nuevo y aun no se guarda en ningun lugar
         self.ruta_archivo=None
+        #limpiar seccion
+        if(self.bottom_panel):
+            self.bottom_panel.clean_errores_lexicos()
+        if(self.right_panel):
+            self.right_panel.clean_analisis_lexico()
 
     def abrirArchivo(self):
         #esto abre el explorador de archivos del sistema
@@ -97,7 +102,12 @@ class TopMenu:
                 self.texto.delete(1.0, tk.END) #se limpia el text area
                 self.texto.insert("end-1c", contenido) #se inserta el contenido leido en el text area
                 self.texto.mark_set(tk.INSERT, "end-1c") #colocamos el cursor al final del texto
-                self.ruta_archivo=ruta #se guarda la ruta 
+                self.ruta_archivo=ruta #se guarda la ruta
+                #limpiar seccion
+                if(self.bottom_panel):
+                    self.bottom_panel.clean_errores_lexicos()
+                if(self.right_panel):
+                    self.right_panel.clean_analisis_lexico()
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
                 return
@@ -114,6 +124,10 @@ class TopMenu:
         
         self.texto.delete(1.0, tk.END)
         self.ruta_archivo=None
+        if(self.bottom_panel):
+            self.bottom_panel.clean_errores_lexicos()
+        if(self.right_panel):
+            self.right_panel.clean_analisis_lexico()
 
     def guardarArchivo(self):
         #si el archivo ya tiene una ruta
@@ -196,19 +210,35 @@ class TopMenu:
             carpeta=os.path.dirname(self.ruta_archivo)
             nombre=os.path.splitext(os.path.basename(self.ruta_archivo))[0]
             ruta_tokens=os.path.join(carpeta, f"tokens_{nombre}.txt")
+            ruta_errores=os.path.join(carpeta, f"errores_{nombre}.txt")
         else:
             #es porque no hay ruta, porque el archivo es nuevo, no se ha guardado nunca
             ruta_tokens="tokens_nuevo.txt"
+            ruta_errores="errores_nuevo.txt"
+
+        errores=[]
 
         #escanear y guardar en el archivo
         with open(ruta_tokens, "w", encoding="utf-8") as archivo_tokens:
             while True:
                 token=self.scanner.getToken()
                 #print(token) #ver en consola
-                archivo_tokens.write(str(token)+'\n') #mandando al archivo
-                #enfile significa ya termino de ver el archivo, hay que salir del loop
-                if(token.tipo==TokenType.endfile):
+                if(token.tipo==TokenType.error):
+                    #si es un error, no se guarda aqui, es en otro archivo
+                    errores.append(token);
+                elif(token.tipo==TokenType.endfile):
+                    #enfile significa ya termino de ver el archivo, hay que salir del loop
                     break
+                else:
+                    archivo_tokens.write(str(token)+'\n') #mandando al archivo los tokens validos
+    
+        #guardando los errores en el archivo correspondiente
+        with open(ruta_errores, "w", encoding="utf-8") as archivo_errores:
+            if errores:
+                for error in errores:
+                    archivo_errores.write(str(error) + '\n')
+            else:
+                archivo_errores.write("Sin errores léxicos.\n")
         
         #leer el archivo y mostrar en la seccion correspondiente
         if(self.right_panel):
@@ -217,3 +247,7 @@ class TopMenu:
             self.right_panel.mostrar_analisis_lexico(contenido)
             #cambiar al tab lexico automaticamente
             self.right_panel.tabs_notebook.select(self.right_panel.tab_lexico)
+
+        #cambiar al tab de errores para que si los hubo mostrarlos
+        if errores and self.bottom_panel:
+            self.bottom_panel.tabs_notebook.select(self.bottom_panel.tab_errores_lexicos)

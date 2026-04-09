@@ -227,14 +227,13 @@ class Token:
                 if(c is not None and c.isdigit()):
                     estado=Estado.numFlotante
                 else:
-                    #el punto no era parte del numero
+                    #tiene punto pero no digito despues, es error
                     if(c is not None):
                         self.regresarC()
-                    self.regresarC()
-                    lexema=lexema[:-1] #quitamos el punto del lexema
                     guardar=False
                     estado=Estado.hecho
-                    tokenActual=TokenType.numero_entero
+                    tokenActual=TokenType.error
+                    self.reportarError(f"Número mal formado: '{lexema}' (punto sin decimales)", token_linea, token_columna)
             
             #entrada de un flotante
             elif(estado==Estado.numFlotante):
