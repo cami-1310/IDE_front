@@ -431,3 +431,4 @@ class Token:
                 self.bottom_panel.agregar_error(texto_error)
             except Exception:
                 pass
+            
