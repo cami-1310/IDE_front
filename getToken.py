@@ -1,8 +1,5 @@
-#Todo este archivo se encarga de tokenizar
-
 from enum import Enum, auto
 
-#Estados del automata
 class Estado(Enum):
     inicio=auto()
     entradaID=auto()
@@ -10,9 +7,9 @@ class Estado(Enum):
     entradaNumFlotante=auto()
     numFlotante=auto()
     posibleComentario=auto()
-    cml=auto() #comentario de multiples lineas
-    cul=auto() #comentario de una linea
-    pfc=auto() #posible final de comentario
+    cml=auto()
+    cul=auto()
+    pfc=auto()
     posibleCadena=auto()
     posibleCaracter=auto()
     caracter=auto()
@@ -21,14 +18,11 @@ class Estado(Enum):
     posibleOpLogico=auto()
     posibleIncremento=auto()
     posibleDecremento=auto()
-    hecho=auto() #estado final
+    hecho=auto()
 
-#Todos los tokens posibles
 class TokenType(Enum):
-    #book-keeping
     endfile=auto()
     error=auto()
-    #palabras reservadas
     if_word=auto()
     else_word=auto()
     end_word=auto()
@@ -41,13 +35,11 @@ class TokenType(Enum):
     main_word=auto()
     cin_word=auto()
     cout_word=auto()
-    #literales
     identificador=auto()
     numero_entero=auto()
     numero_flotante=auto()
     cadena=auto()
     caracter=auto()
-    #operdores aritmeticos
     suma=auto()
     resta=auto()
     multiplicacion=auto()
@@ -56,7 +48,6 @@ class TokenType(Enum):
     potencia=auto()
     incremento=auto()
     decremento=auto()
-    #operadores relacionales y logicos
     menorQue=auto()
     menorIgual=auto()
     mayorQue=auto()
@@ -66,17 +57,15 @@ class TokenType(Enum):
     opAnd=auto()
     opOr=auto()
     opNot=auto()
-    #simbolos especiales
     parentesisDer=auto()
     parentesisIzq=auto()
     llaveDer=auto()
     llaveIzq=auto()
     coma=auto()
     puntoComa=auto()
-    #asignacion
     asignacion=auto()
-    
-#array de las palabras reservadas
+    comentario=auto()
+
 reserved_words={
     "if":     TokenType.if_word,
     "else":   TokenType.else_word,
@@ -101,7 +90,7 @@ class TokenResult:
 
     def __repr__(self):
         return f"Token({self.tipo.name}, '{self.lexema}', L{self.linea}:C{self.columna})"
-    
+
 class Token:
     def __init__(self, root, text_widget, bottom_panel=None):
         self.root=root
@@ -113,25 +102,18 @@ class Token:
         self.columna=1
 
     def cargarCodigo(self):
-        #obteniendo codigo actual del editor
-        self.codigo=self.texto.get("1.0", "end-1c") #obtener todo el codigo del textarea
+        self.codigo=self.texto.get("1.0", "end-1c")
         self.index=0
         self.linea=1
         self.columna=1
 
     def getToken(self):
-        #esta funcion nos va a retornar el siguiente token
-        #ignora comentarios, espacios en blanco y tabuladores
-
         while True:
-            #loop para ignorar los comentarios (regresa al inicio)
             resultado=self.escanear()
             if resultado is not None:
                 return resultado
-            
+
     def escanear(self):
-        #esta funcion es lo equivalente a ejecutar el automata
-        #retorna TokenResult o None si es un comentario
         lexema=""
         estado=Estado.inicio
         tokenActual=TokenType.error
@@ -151,15 +133,13 @@ class Token:
                     tokenActual=TokenType.endfile
                     estado=Estado.hecho
                 elif(c in (' ', '\t', '\n')):
-                    #si el caracter es un espacio en blanco, un tabulador, o un salto de linea
-                    #no se guarda
                     guardar=False
                 elif(c.isdigit()):
                     estado=Estado.entradaNum
-                elif (c.isalpha()):
+                elif(c.isalpha()):
                     estado=Estado.entradaID
                 elif(c=='/'):
-                    guardar=False #el caracter no forma parte del lexema todavía
+                    guardar=False
                     estado=Estado.posibleComentario
                 elif(c=='&'):
                     guardar=False
@@ -180,7 +160,6 @@ class Token:
                 elif(c in ('!', '<', '>', '=')):
                     estado=Estado.posibleOpLogico
                 else:
-                    #{|}|(|)|,|;|*|^|%
                     estado=Estado.hecho
                     if(c=='('): tokenActual=TokenType.parentesisIzq
                     elif(c==')'): tokenActual=TokenType.parentesisDer
@@ -195,21 +174,16 @@ class Token:
                         tokenActual=TokenType.error
                         self.reportarError(f"Caracter no reconocido: '{c}'", token_linea, token_columna)
 
-            #entrada de un ID
             elif(estado==Estado.entradaID):
                 if(c is not None and (c.isalpha() or c.isdigit())):
-                    #el primer caracter debe ser una letra, de ahi, el id si puede contener numeros
                     pass
                 else:
                     if(c is not None):
                         self.regresarC()
                     guardar=False
                     estado=Estado.hecho
-                    #si encuentra el lexema entre las palabras reservadas lo tokeniza como tal
-                    #si no, se trata de un identificador
                     tokenActual=reserved_words.get(lexema, TokenType.identificador)
-            
-            #entrada de un numero
+
             elif(estado==Estado.entradaNum):
                 if(c is not None and c.isdigit()):
                     pass
@@ -218,24 +192,21 @@ class Token:
                 else:
                     if(c is not None):
                         self.regresarC()
-                    guardar=False #el char que rompió el numero no se guarda
+                    guardar=False
                     estado=Estado.hecho
                     tokenActual=TokenType.numero_entero
-            
-            #posible entrada de un flotante
+
             elif(estado==Estado.entradaNumFlotante):
                 if(c is not None and c.isdigit()):
                     estado=Estado.numFlotante
                 else:
-                    #tiene punto pero no digito despues, es error
                     if(c is not None):
                         self.regresarC()
                     guardar=False
                     estado=Estado.hecho
                     tokenActual=TokenType.error
                     self.reportarError(f"Número mal formado: '{lexema}' (punto sin decimales)", token_linea, token_columna)
-            
-            #entrada de un flotante
+
             elif(estado==Estado.numFlotante):
                 if(c is not None and c.isdigit()):
                     pass
@@ -245,88 +216,86 @@ class Token:
                     guardar=False
                     estado=Estado.hecho
                     tokenActual=TokenType.numero_flotante
-            
-            #entrada de un posible comentario
+
             elif(estado==Estado.posibleComentario):
                 guardar=False
                 if(c=='/'):
-                    #comenario de una linea
                     estado=Estado.cul
+                    lexema='//'
                 elif(c=='*'):
-                    #comenario de multiples lineas
                     estado=Estado.cml
+                    lexema='/*'
                 else:
                     if(c is not None):
                         self.regresarC()
-                    #si despues de la / viene otro caracter debería ser division
                     lexema='/'
                     tokenActual=TokenType.division
                     estado=Estado.hecho
-            
-            #comentario de una sola linea
+
             elif(estado==Estado.cul):
-                guardar=False
                 if(c=='\n' or c is None):
-                    return None #ignorar el comentario completo
-            
-            #comentario multiples lineas
+                    guardar=False
+                    tokenActual=TokenType.comentario
+                    estado=Estado.hecho
+                else:
+                    pass
+
             elif(estado==Estado.cml):
-                guardar=False
                 if(c is None):
                     self.reportarError("Comentario multilínea sin cerrar", token_linea, token_columna)
+                    guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
                 elif(c=='*'):
                     estado=Estado.pfc
-            
-            #posible final de comentario
+                else:
+                    pass
+
             elif(estado==Estado.pfc):
-                guardar=False
                 if(c=='/'):
-                    return None #ignorar el comentario completo
+                    lexema+=c
+                    guardar=False
+                    tokenActual=TokenType.comentario
+                    estado=Estado.hecho
                 elif(c is None):
                     self.reportarError("Comentario multilínea sin cerrar", token_linea, token_columna)
+                    guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
                 elif(c!='*'):
-                    estado=Estado.cml #sigue dentro del comentario
-            
-            #posible cadena
+                    estado=Estado.cml
+
             elif(estado==Estado.posibleCadena):
                 if(c=='"'):
-                    guardar=False #la comilla de cierre no se guarda en el lexema
+                    guardar=False
                     tokenActual=TokenType.cadena
                     estado=Estado.hecho
                 elif(c is None or c=='\n'):
-                    guardar=False #EOF o salto de linea no van en el lexema
+                    guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
                     self.reportarError("Cadena sin cerrar", token_linea, token_columna)
-                #else solo acumula los caracteres de la cadena
-                    
-            #posible caracter
+
             elif(estado==Estado.posibleCaracter):
                 if(c is None or c=='\n'):
-                    guardar=False #EOF o salto de linea no van en el lexema
+                    guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
                     self.reportarError("Caracter mal declarado", token_linea, token_columna)
                 else:
                     estado=Estado.caracter
 
-            #entrada de un caracter
             elif(estado==Estado.caracter):
                 if(c=="'"):
-                    guardar=False #la comilla no se guarda en el lexema
+                    guardar=False
                     tokenActual=TokenType.caracter
                     estado=Estado.hecho
                 else:
-                    guardar=False #lo que venga despues ya no va al lexema
+                    guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
                     self.reportarError("Caracter mal declarado", token_linea, token_columna)
-            
-            #posible &&
+
             elif(estado==Estado.posibleAND):
                 guardar=False
                 estado=Estado.hecho
@@ -339,7 +308,6 @@ class Token:
                     tokenActual=TokenType.error
                     self.reportarError("'&' solo no es válido, use '&&'", token_linea, token_columna)
 
-            #posible ||
             elif(estado==Estado.posibleOR):
                 guardar=False
                 estado=Estado.hecho
@@ -351,8 +319,7 @@ class Token:
                         self.regresarC()
                     tokenActual=TokenType.error
                     self.reportarError("'|' solo no es válido, use '||'", token_linea, token_columna)
-            
-            #posible ++
+
             elif(estado==Estado.posibleIncremento):
                 estado=Estado.hecho
                 if(c=='+'):
@@ -363,7 +330,6 @@ class Token:
                     guardar=False
                     tokenActual=TokenType.suma
 
-            #posible --
             elif(estado==Estado.posibleDecremento):
                 estado=Estado.hecho
                 if(c=='-'):
@@ -374,7 +340,6 @@ class Token:
                     guardar=False
                     tokenActual=TokenType.resta
 
-            #posible operador logico
             elif(estado==Estado.posibleOpLogico):
                 estado=Estado.hecho
                 if(c=='='):
@@ -383,7 +348,6 @@ class Token:
                     elif(lexema=='>'): tokenActual=TokenType.mayorIgual
                     elif(lexema=='='): tokenActual=TokenType.igual
                 else:
-                    #operador simple, devolver el leido
                     if(c is not None):
                         self.regresarC()
                     guardar=False
@@ -397,11 +361,19 @@ class Token:
 
         return TokenResult(tokenActual, lexema, token_linea, token_columna)
 
+    def tokenizar_todo(self):
+        self.cargarCodigo()
+        tokens=[]
+        while True:
+            tok=self.getToken()
+            if tok.tipo==TokenType.endfile:
+                break
+            tokens.append(tok)
+        return tokens
+
     def sigienteC(self):
         if self.index >= len(self.codigo):
-            return None #EOF
-        
-        #else
+            return None
         c=self.codigo[self.index]
         self.index+=1
         if(c=='\n'):
@@ -424,7 +396,6 @@ class Token:
 
     def reportarError(self, mensaje, linea, columna):
         texto_error=f"[Error léxico] L{linea}:C{columna} → {mensaje}"
-        #print(texto_error)
         if self.bottom_panel:
             try:
                 self.bottom_panel.add_error_lexico(texto_error)
