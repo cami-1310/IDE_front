@@ -1,0 +1,3 @@
+Token(error, '@', L1:C9)
+Token(error, '32.', L1:C25)
+Token(error, '.', L2:C6)

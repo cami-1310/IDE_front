@@ -1,6 +1,9 @@
 Token(main_word, 'main', L1:C1)
 Token(identificador, 'sum', L1:C6)
+<<<<<<< HEAD:tokens_nuevo.txt
 Token(error, '@', L1:C9)
+=======
+>>>>>>> ec85ea03ed0716b54dae4baeb75e32c4b84bd085:tokens_testLexico.txt
 Token(identificador, 'r', L1:C10)
 Token(numero_flotante, '3.14', L1:C12)
 Token(suma, '+', L1:C16)
@@ -8,11 +11,13 @@ Token(main_word, 'main', L1:C17)
 Token(parentesisDer, ')', L1:C21)
 Token(if_word, 'if', L1:C22)
 Token(llaveIzq, '{', L1:C24)
+<<<<<<< HEAD:tokens_nuevo.txt
 Token(numero_entero, '32', L1:C25)
 Token(error, '.', L1:C27)
+=======
+>>>>>>> ec85ea03ed0716b54dae4baeb75e32c4b84bd085:tokens_testLexico.txt
 Token(identificador, 'algo', L1:C28)
 Token(numero_flotante, '34.34', L2:C1)
-Token(error, '.', L2:C6)
 Token(numero_flotante, '34.34', L2:C7)
 Token(llaveIzq, '{', L3:C1)
 Token(int_word, 'int', L4:C1)
@@ -240,4 +245,3 @@ Token(puntoComa, ';', L49:C11)
 Token(llaveDer, '}', L50:C1)
 Token(puntoComa, ';', L50:C2)
 Token(llaveDer, '}', L51:C1)
-Token(endfile, '', L56:C2)
