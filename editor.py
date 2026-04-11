@@ -199,7 +199,10 @@ class IDEEditor(tk.Tk):
         self.hscrollbar.pack(fill=tk.X, expand=True)
         self.hscrollbar.config(command=self.editor.xview)
 
-        for event in ('<MouseWheel>', '<Button-4>', '<Button-5>', '<KeyRelease>', '<Key>'):
+        for event in ('<MouseWheel>', '<Button-4>', '<Button-5>'):
+            self.editor.bind(event, lambda e: self._actualizar_lineas())
+
+        for event in ('<KeyRelease>', '<Key>'):
             self.editor.bind(event, lambda e: (
                 self._actualizar_lineas(),
                 self._resaltar_con_debounce()

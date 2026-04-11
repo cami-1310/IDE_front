@@ -361,12 +361,21 @@ class Token:
 
         return TokenResult(tokenActual, lexema, token_linea, token_columna)
 
+    def limpiarErrores(self):
+        if self.bottom_panel:
+            try:
+                self.bottom_panel.limpiar_errores_lexicos() 
+            except Exception:
+                pass
+
     def tokenizar_todo(self):
         self.cargarCodigo()
-        tokens=[]
+        if self.bottom_panel:          # ← agrega estas dos líneas
+            self.bottom_panel.clean_errores_lexicos()
+        tokens = []
         while True:
-            tok=self.getToken()
-            if tok.tipo==TokenType.endfile:
+            tok = self.getToken()
+            if tok.tipo == TokenType.endfile:
                 break
             tokens.append(tok)
         return tokens
