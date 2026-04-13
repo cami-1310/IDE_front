@@ -277,7 +277,11 @@ class Token:
                     self.reportarError("Cadena sin cerrar", token_linea, token_columna)
 
             elif(estado==Estado.posibleCaracter):
-                if(c is None or c=='\n'):
+                if(c=="'"):
+                    guardar=False
+                    tokenActual=TokenType.caracter
+                    estado=Estado.hecho
+                elif(c is None or c=='\n'):
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho

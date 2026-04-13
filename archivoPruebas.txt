@@ -46,5 +46,5 @@ cout
 ""
 //caracter vacio invalido
 ''
-//probando simbolos inválidos
+//probando simbolos inválidos arreglar | y & para que tambien se vean en rojo
 ¬|°_#$&?¡¿@`~¨´[]
