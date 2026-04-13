@@ -20,6 +20,8 @@ COLOR_5   = '#ce9178'  # op. aritmeticos → naranja
 COLOR_6   = '#c586c0'  # op. relacionales y logicos → lila
 COLOR_SIM = '#d4d4d4'  # simbolos y asignacion
 COLOR_ERR = '#f44747'  # errores
+# Cerca de tus constantes de colores
+FUENTE_GENERAL = ('Consolas', 11)
 
 PALABRAS_RESERVADAS = (
     TokenType.if_word, TokenType.else_word, TokenType.end_word,
@@ -154,7 +156,7 @@ class IDEEditor(tk.Tk):
 
         self.numero_lineas = tk.Text(
             editor_frame, width=4, padx=4, takefocus=0, border=0,
-            background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG
+            background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG, font=FUENTE_GENERAL # <--- Usa la misma fuente que el editor
         )
         self.numero_lineas.pack(side=tk.LEFT, fill=tk.Y)
         self.numero_lineas.tag_config('linea_actual', foreground='#ffffff', background='#404040')
