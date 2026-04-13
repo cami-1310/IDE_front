@@ -1,0 +1,50 @@
+//probando comentario una linea color 3
+/*probando comentario
+de multiples lineas 
+no funciona bien color 3 */
+/*comentario de una linea pero con /*../* si funciona*/
+
+//probando numeros color 1
+123456789
+12.36
+36.65
+//probando identificadores falta asignarles color 2
+camila1
+camila2
+identificador56
+//probando palabras reservadas color 4 bien
+if 
+else
+end
+do
+while
+switch
+case
+int 
+float 
+main
+cin
+cout
+//probando operadores aritmeticos color 5
++ - * / % ^ ++ --
+//operadores relacionales color 6
+< 
+<=
+> 
+>=
+!=
+==
+//operadores logicos
+&&
+||
+!
+//probando simbolos
+(){},;""
+'c'
+=
+//cadena vacia valido
+""
+//caracter vacio invalido
+''
+//probando simbolos inválidos
+¬|°_#$&?¡¿@`~¨´[]
