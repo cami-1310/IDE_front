@@ -13,7 +13,7 @@ TEMA_LINES_FG = '#858585'
 TEMA_CURSOR = '#ffffff'
 
 COLOR_1   = '#4ec9b0'  # numeros         → verde menta
-COLOR_2   = '#dcdcdc'  # identificadores → blanco suave
+COLOR_2 = '#9cdcfe'  # identificadores → blanco suave
 COLOR_3   = '#6a9955'  # comentarios     → verde olivo
 COLOR_4   = '#569cd6'  # palabras reservadas → azul cielo
 COLOR_5   = '#ce9178'  # op. aritmeticos → naranja
@@ -131,9 +131,19 @@ class IDEEditor(tk.Tk):
 
         for tok in tokens:
             col_inicio = tok.columna - 1
-            col_fin    = col_inicio + len(tok.lexema)
             inicio = f'{tok.linea}.{col_inicio}'
-            fin    = f'{tok.linea}.{col_fin}'
+
+            lineas_en_lexema = tok.lexema.split('\n')
+            if len(lineas_en_lexema) == 1:
+                # Token en una sola línea
+                col_fin = col_inicio + len(tok.lexema)
+                fin = f'{tok.linea}.{col_fin}'
+            else:
+                # Token multilínea (ej: comentario /* ... */)
+                linea_fin = tok.linea + len(lineas_en_lexema) - 1
+                col_fin   = len(lineas_en_lexema[-1])
+                fin = f'{linea_fin}.{col_fin}'
+
             try:
                 self.editor.tag_add(f'tok_{tok.tipo.name}', inicio, fin)
             except Exception:

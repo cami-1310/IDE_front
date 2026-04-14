@@ -85,6 +85,7 @@ class TopMenu:
         if(self.right_panel):
             self.right_panel.clean_analisis_lexico()
 
+
     def abrirArchivo(self):
         #esto abre el explorador de archivos del sistema
         ruta=filedialog.askopenfilename(
@@ -108,6 +109,7 @@ class TopMenu:
                     self.bottom_panel.clean_errores_lexicos()
                 if(self.right_panel):
                     self.right_panel.clean_analisis_lexico()
+                self.root.after(50, self.root._resaltar_sintaxis)
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
                 return

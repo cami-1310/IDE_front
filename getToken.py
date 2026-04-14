@@ -309,6 +309,7 @@ class Token:
                 else:
                     if(c is not None):
                         self.regresarC()
+                    lexema='&'                  
                     tokenActual=TokenType.error
                     self.reportarError("'&' solo no es válido, use '&&'", token_linea, token_columna)
 
@@ -321,6 +322,7 @@ class Token:
                 else:
                     if(c is not None):
                         self.regresarC()
+                    lexema='|'                 
                     tokenActual=TokenType.error
                     self.reportarError("'|' solo no es válido, use '||'", token_linea, token_columna)
 
