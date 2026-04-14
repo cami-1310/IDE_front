@@ -82,11 +82,12 @@ reserved_words={
 }
 
 class TokenResult:
-    def __init__(self, tipo, lexema, linea, columna):
+    def __init__(self, tipo, lexema, linea, columna,index_final):
         self.tipo=tipo
         self.lexema=lexema
         self.linea=linea
         self.columna=columna
+        self.index_final = index_final
 
     def __repr__(self):
         return f"Token({self.tipo.name}, '{self.lexema}', L{self.linea}:C{self.columna})"
@@ -381,8 +382,7 @@ class Token:
 
             if(guardar and c is not None):
                 lexema+=c
-
-        return TokenResult(tokenActual, lexema, token_linea, token_columna)
+        return TokenResult(tokenActual, lexema, token_linea, token_columna, self.index)
 
     def limpiarErrores(self):
         if self.bottom_panel:

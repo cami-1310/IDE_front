@@ -125,24 +125,19 @@ class IDEEditor(tk.Tk):
             self.editor.tag_remove(f'tok_{tipo.name}', '1.0', tk.END)
 
         try:
+            self.tokenizador.cargarCodigo()
             tokens = self.tokenizador.tokenizar_todo()
         except Exception:
             return
 
         for tok in tokens:
+            # Calculamos la posición inicial
             col_inicio = tok.columna - 1
             inicio = f'{tok.linea}.{col_inicio}'
-
-            lineas_en_lexema = tok.lexema.split('\n')
-            if len(lineas_en_lexema) == 1:
-                # Token en una sola línea
-                col_fin = col_inicio + len(tok.lexema)
-                fin = f'{tok.linea}.{col_fin}'
-            else:
-                # Token multilínea (ej: comentario /* ... */)
-                linea_fin = tok.linea + len(lineas_en_lexema) - 1
-                col_fin   = len(lineas_en_lexema[-1])
-                fin = f'{linea_fin}.{col_fin}'
+            
+            # Usamos el index_final para decirle a Tkinter exactamente dónde terminar
+            # '1.0 + X chars' es la forma más precisa de mapear el índice del string al widget
+            fin = f'1.0 + {tok.index_final} chars'
 
             try:
                 self.editor.tag_add(f'tok_{tok.tipo.name}', inicio, fin)
