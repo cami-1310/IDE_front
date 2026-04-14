@@ -228,6 +228,9 @@ class TopMenu:
                 if(token.tipo==TokenType.error):
                     #si es un error, no se guarda aqui, es en otro archivo
                     errores.append(token);
+                elif(token.tipo==TokenType.comentario):
+                    #si es un comentario, no se guarda
+                    pass
                 elif(token.tipo==TokenType.endfile):
                     #enfile significa ya termino de ver el archivo, hay que salir del loop
                     break

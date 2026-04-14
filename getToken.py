@@ -301,58 +301,74 @@ class Token:
                     self.reportarError("Caracter mal declarado", token_linea, token_columna)
 
             elif(estado==Estado.posibleAND):
-                guardar=False
-                estado=Estado.hecho
-                if(c=='&'):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='&'):
+                    guardar=False
                     lexema='&&'
                     tokenActual=TokenType.opAnd
+                    estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
+                    guardar=False
                     lexema='&'                  
                     tokenActual=TokenType.error
                     self.reportarError("'&' solo no es válido, use '&&'", token_linea, token_columna)
+                    estado=Estado.hecho
 
             elif(estado==Estado.posibleOR):
-                guardar=False
-                estado=Estado.hecho
-                if(c=='|'):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='|'):
+                    guardar=False
                     lexema='||'
                     tokenActual=TokenType.opOr
+                    estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
+                    guardar=False
                     lexema='|'                 
                     tokenActual=TokenType.error
                     self.reportarError("'|' solo no es válido, use '||'", token_linea, token_columna)
+                    estado=Estado.hecho
 
             elif(estado==Estado.posibleIncremento):
-                estado=Estado.hecho
-                if(c=='+'):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='+'):
                     tokenActual=TokenType.incremento
+                    estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
                     guardar=False
                     tokenActual=TokenType.suma
+                    estado=Estado.hecho
 
             elif(estado==Estado.posibleDecremento):
-                estado=Estado.hecho
-                if(c=='-'):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='-'):
                     tokenActual=TokenType.decremento
+                    estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
                     guardar=False
                     tokenActual=TokenType.resta
+                    estado=Estado.hecho
 
             elif(estado==Estado.posibleOpLogico):
-                estado=Estado.hecho
-                if(c=='='):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='='):
                     if(lexema=='!'): tokenActual=TokenType.diferente
                     elif(lexema=='<'): tokenActual=TokenType.menorIgual
                     elif(lexema=='>'): tokenActual=TokenType.mayorIgual
                     elif(lexema=='='): tokenActual=TokenType.igual
+                    estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
@@ -361,6 +377,7 @@ class Token:
                     elif(lexema=='>'): tokenActual=TokenType.mayorQue
                     elif(lexema=='='): tokenActual=TokenType.asignacion
                     elif(lexema=='!'): tokenActual=TokenType.opNot
+                    estado=Estado.hecho
 
             if(guardar and c is not None):
                 lexema+=c

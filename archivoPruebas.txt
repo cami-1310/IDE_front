@@ -1,18 +1,17 @@
 //probando comentario una linea color 3
-/*probando comentario
-de multiples lineas 
-no funciona bien color 3 */
+/* probando comentario
+de multiples lineas color 3 */
 /*comentario de una linea pero con /*../* si funciona*/
 
 //probando numeros color 1
 123456789
 12.36
 36.65
-//probando identificadores falta asignarles color 2
+//probando identificadores color 2
 camila1
 camila2
 identificador56
-//probando palabras reservadas color 4 bien
+//probando palabras reservadas color 4
 if 
 else
 end
@@ -27,24 +26,23 @@ cin
 cout
 //probando operadores aritmeticos color 5
 + - * / % ^ ++ --
-//operadores relacionales color 6
+//probando operadores relacionales color 6
 < 
 <=
 > 
 >=
 !=
 ==
-//operadores logicos
+//operadores logicos color 6
 &&
 ||
 !
 //probando simbolos
-(){},;""
-'c'
+(){},;"cami" 'c'
 =
-//cadena vacia valido
+//cadena vacia valida
 ""
-//caracter vacio invalido
+//caracter vacio valido
 ''
-//probando simbolos inválidos arreglar | y & para que tambien se vean en rojo
+//probando simbolos inválidos
 ¬|°_#$&?¡¿@`~¨´[]
