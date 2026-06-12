@@ -1,0 +1,18 @@
+******************* Errores léxicos *******************
+Sin errores léxicos.
+
+******************* Errores sintácticos *******************
+[Error sintáctico] L3:C11 -> Se esperaba ';' pero se encontró '='
+[Error sintáctico] L5:C7 -> Se esperaba '=' pero se encontró 'número entero'
+[Error sintáctico] L7:C13 -> Se esperaba un valor pero se encontró ';'
+[Error sintáctico] L9:C9 -> Se esperaba un valor pero se encontró '*'
+[Error sintáctico] L11:C17 -> Se esperaba ')' pero se encontró ';'
+[Error sintáctico] L14:C2 -> Se esperaba 'then' pero se encontró 'identificador'
+[Error sintáctico] L17:C6 -> Se esperaba '=' pero se encontró '++'
+[Error sintáctico] L25:C20 -> Se esperaba ';' pero se encontró '+'
+[Error sintáctico] L27:C15 -> Se esperaba '>>' pero se encontró 'identificador'
+[Error sintáctico] L29:C16 -> Se esperaba '<<' pero se encontró 'identificador'
+[Error sintáctico] L31:C19 -> Se esperaba un valor pero se encontró ';'
+[Error sintáctico] L35:C6 -> Se esperaba ';' pero se encontró 'end'
+[Error sintáctico] L35:C6 -> Se esperaba 'while' pero se encontró 'end'
+[Error sintáctico] L42:C1 -> Se esperaba 'end' pero se encontró '}'

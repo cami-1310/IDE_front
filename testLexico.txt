@@ -1,10 +1,7 @@
-//main sum@r 3.14+main)if{32.algo
-34.34.34.34
-.325+987.otro+a1b2c3
-+++++-----=====
-/*{
+main
+{
 int x,y,z;
-real a,b,c;
+float a,b,c;
  suma=45;
 x=32.32;
 x=23;
@@ -26,30 +23,21 @@ if(2>3)then
        end;
        y=y+1;
 end;
-a+
-
-+;
+a++;
 c--;
 x=3+4;
 do
    y=(y+1)*2+1;
-   while(x>7){x=6+8/9*8/3;   
-    cin x; 
+   while(x>7)x=6+8/9*8/3;   
+    cin >> x; 
    mas=36/7; 
-   };
+   end;
 
- until(y=
-
-
-=
-
-
-
-5);
- while(y==0){
-    cin mas;
-    cout x;*/
-};
+ while(y==5);
+ while(y==0)
+    cin >> mas;
+    cout << x+9*8;
+end;
 }
 
 

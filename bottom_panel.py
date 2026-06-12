@@ -41,10 +41,13 @@ class BottomPanel:
         self.tabs_notebook.add(self.tab_errores_semanticos, text="Errores Semánticos")
         self.tabs_notebook.add(self.tab_resultados, text="Resultados")
 
-    def add_error_lexico(self, mensaje):
+    def add_error_lexico(self, mensaje, sinErrores):
         #se añade el error lexico a la seccion correspondiente
         self.tab_errores_lexicos.config(state='normal')
-        self.tab_errores_lexicos.tag_config('error', foreground='#ff5555')
+        if(sinErrores == 1):
+            self.tab_errores_lexicos.tag_config('error', foreground='#c3ff55')
+        else:
+            self.tab_errores_lexicos.tag_config('error', foreground='#ff5555')
         self.tab_errores_lexicos.insert(tk.END, mensaje + "\n", 'error')
         self.tab_errores_lexicos.config(state='disabled')
         self.tab_errores_lexicos.see(tk.END)
@@ -54,3 +57,18 @@ class BottomPanel:
         self.tab_errores_lexicos.config(state='normal')
         self.tab_errores_lexicos.delete('1.0', tk.END)
         self.tab_errores_lexicos.config(state='disabled')
+
+    def add_error_sintactico(self, mensaje, sinErrores):
+        self.tab_errores_sintacticos.config(state='normal')
+        if(sinErrores == 1):
+            self.tab_errores_sintacticos.tag_config('error', foreground="#c3ff55")
+        else:
+            self.tab_errores_sintacticos.tag_config('error', foreground='#ff5555')
+        self.tab_errores_sintacticos.insert(tk.END, mensaje + "\n", 'error')
+        self.tab_errores_sintacticos.config(state='disabled')
+        self.tab_errores_sintacticos.see(tk.END)
+
+    def clean_errores_sintacticos(self):
+        self.tab_errores_sintacticos.config(state='normal')
+        self.tab_errores_sintacticos.delete('1.0', tk.END)
+        self.tab_errores_sintacticos.config(state='disabled')

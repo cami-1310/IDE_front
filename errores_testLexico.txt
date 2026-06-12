@@ -1,3 +1,7 @@
-Token(error, '@', L1:C9)
-Token(error, '32.', L1:C25)
-Token(error, '.', L2:C6)
+******************* Errores léxicos *******************
+Sin errores léxicos.
+
+******************* Errores sintácticos *******************
+[Error sintáctico] L19:C17 -> Se esperaba un valor pero se encontró ')'
+[Error sintáctico] L31:C14 -> Se esperaba ';' pero se encontró 'identificador'
+[Error sintáctico] L34:C4 -> Se esperaba '}' pero se encontró 'end'

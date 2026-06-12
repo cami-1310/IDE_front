@@ -17,10 +17,9 @@ else
 end
 do
 while
-switch
-case
 int 
-float 
+float
+bool 
 main
 cin
 cout
@@ -46,3 +45,30 @@ cout
 ''
 //probando simbolos inválidos
 ¬|°_#$&?¡¿@`~¨´[]
+
+//probando colocar operadores de dos caracteres declarados en diferentes lineas
+-
+-
++
++
+|
+|
+&
+&
+=
+=
+<
+=
+>
+=
+!
+=
+>
+>
+<
+<
+<<
+>>
+cin >> id
+cout << salida
+()

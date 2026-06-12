@@ -1,10 +1,10 @@
 import tkinter as tk
+import threading
+import time
 from topMenu import TopMenu
 from bottom_panel import BottomPanel
 from right_panel import RightPanel
-from getToken import Token, TokenType
-import threading
-import time
+from faseLexico import Token, TokenType
 
 TEMA_BG = '#1e1e1e'
 TEMA_FG = '#d4d4d4'
@@ -13,26 +13,28 @@ TEMA_LINES_FG = '#858585'
 TEMA_CURSOR = '#ffffff'
 
 COLOR_1   = '#4ec9b0'  # numeros         → verde menta
-COLOR_2 = '#9cdcfe'  # identificadores → blanco suave
+COLOR_2   = '#9cdcfe'  # identificadores → azul suave
 COLOR_3   = '#6a9955'  # comentarios     → verde olivo
 COLOR_4   = '#569cd6'  # palabras reservadas → azul cielo
 COLOR_5   = '#ce9178'  # op. aritmeticos → naranja
 COLOR_6   = '#c586c0'  # op. relacionales y logicos → lila
-COLOR_SIM = '#d4d4d4'  # simbolos y asignacion
+COLOR_SIM = "#fcf7fa"  # simbolos y asignacion
 COLOR_ERR = '#f44747'  # errores
 # Cerca de tus constantes de colores
 FUENTE_GENERAL = ('Consolas', 11)
 
 PALABRAS_RESERVADAS = (
     TokenType.if_word, TokenType.else_word, TokenType.end_word,
-    TokenType.do_word, TokenType.while_word, TokenType.switch_word,
-    TokenType.case_word, TokenType.int_word, TokenType.float_word,
-    TokenType.main_word, TokenType.cin_word, TokenType.cout_word,
+    TokenType.do_word, TokenType.while_word, TokenType.then_word, 
+    TokenType.int_word, TokenType.float_word, TokenType.bool_word,
+    TokenType.bool_value, TokenType.main_word, TokenType.cin_word, 
+    TokenType.cout_word
 )
 
 TOKEN_COLORS = {
     TokenType.numero_entero:   COLOR_1,
     TokenType.numero_flotante: COLOR_1,
+    TokenType.bool_value:      COLOR_1,
 
     TokenType.identificador:   COLOR_2,
 
@@ -43,10 +45,11 @@ TOKEN_COLORS = {
     TokenType.end_word:        COLOR_4,
     TokenType.do_word:         COLOR_4,
     TokenType.while_word:      COLOR_4,
-    TokenType.switch_word:     COLOR_4,
-    TokenType.case_word:       COLOR_4,
+    TokenType.end_word:        COLOR_4,
+    TokenType.then_word:       COLOR_4,
     TokenType.int_word:        COLOR_4,
     TokenType.float_word:      COLOR_4,
+    TokenType.bool_word:       COLOR_4,
     TokenType.main_word:       COLOR_4,
     TokenType.cin_word:        COLOR_4,
     TokenType.cout_word:       COLOR_4,
@@ -79,10 +82,11 @@ TOKEN_COLORS = {
     TokenType.cadena:          COLOR_SIM,
     TokenType.caracter:        COLOR_SIM,
     TokenType.asignacion:      COLOR_SIM,
+    TokenType.opIn:            COLOR_SIM,
+    TokenType.opOut:           COLOR_SIM,
 
     TokenType.error:           COLOR_ERR,
 }
-
 
 class IDEEditor(tk.Tk):
     def __init__(self):
@@ -161,7 +165,7 @@ class IDEEditor(tk.Tk):
 
         self.numero_lineas = tk.Text(
             editor_frame, width=4, padx=4, takefocus=0, border=0,
-            background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG, font=FUENTE_GENERAL # <--- Usa la misma fuente que el editor
+            background=TEMA_LINES_BG, state='disabled', foreground=TEMA_LINES_FG, font=FUENTE_GENERAL
         )
         self.numero_lineas.pack(side=tk.LEFT, fill=tk.Y)
         self.numero_lineas.tag_config('linea_actual', foreground='#ffffff', background='#404040')
@@ -305,8 +309,8 @@ class IDEEditor(tk.Tk):
         self._actualizar_activo = False
         if hasattr(self, '_hilo_actualizar'):
             self._hilo_actualizar.join(timeout=1)
+        self.menu.salirIDE()
         self.destroy()
-
 
 if __name__ == "__main__":
     IDEEditor().mainloop()

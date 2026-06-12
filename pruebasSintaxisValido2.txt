@@ -1,0 +1,50 @@
+main {
+    int x, y, z;
+    float promedio;
+    bool activo;
+
+    x = 10;
+    y = 3 + 4 * 2;
+    z = x % y;
+    promedio = (x + y) / 2;
+    activo = true;
+
+    if x > 0 then
+        cout << "positivo";
+    end;
+
+    if x >= y then
+        z = x - y;
+    else
+        z = y - x;
+    end;
+
+    while x > 0
+        x = x - 1;
+    end;
+
+    do
+        y = y + 1;
+    while y < 10;
+
+    cin >> x;
+    cout << "resultado";
+    cout << promedio;
+    cout << "valor: " << x + 1;
+
+    x = x ^ 2;
+    y = !activo;
+    z = x++ + y--;
+
+    if x > 0 && y < 10 then
+        activo = true;
+    end;
+
+    if x == 0 || y != 5 then
+        z = 0;
+    end;
+
+    if (x + y) * 2 >= 10 then
+        cout << "ok";
+    end;
+}

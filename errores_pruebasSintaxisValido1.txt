@@ -1,0 +1,5 @@
+******************* Errores léxicos *******************
+Sin errores léxicos.
+
+******************* Errores sintácticos *******************
+Sin errores sintácticos.

@@ -1,0 +1,30 @@
+main { 
+int a; 
+a = 5; 
+int b; 
+b = a + 3; 
+int c; 
+c = (a + b) * 2; 
+int a; 
+a = 2 + 3 * 4; 
+a = (2 + 3) * 4; 
+a = 2 ^ 3 ^ 2; 
+a = a++; 
+a = a--; 
+x = true; 
+x = false; 
+x = !true; 
+x = 5 < 10; 
+x = 5 < 10 && 8 > 3; 
+x = 5 < 10 || 8 > 3; 
+cin >> a; 
+cout << "Hola"; 
+cout << a; 
+cout << "Valor:" << a; 
+cout << a << " unidades"; 
+if x > 0 then x = 1; end; 
+if x > 0 then x = 1; else x = 2; end; 
+while x > 0 x = x - 1; end; 
+do x = x + 1; while x < 10; 
+while x > 0 if x > 10 then x = x - 1; else x = x - 2; end; end; 
+}

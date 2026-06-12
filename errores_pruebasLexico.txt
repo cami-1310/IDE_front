@@ -1,0 +1,21 @@
+******************* Errores léxicos *******************
+[Error léxico] L47:C1 → Caracter no reconocido: '¬'
+[Error léxico] L47:C2 → '|' solo no es válido, use '||'
+[Error léxico] L47:C3 → Caracter no reconocido: '°'
+[Error léxico] L47:C4 → Caracter no reconocido: '_'
+[Error léxico] L47:C5 → Caracter no reconocido: '#'
+[Error léxico] L47:C6 → Caracter no reconocido: '$'
+[Error léxico] L47:C7 → '&' solo no es válido, use '&&'
+[Error léxico] L47:C8 → Caracter no reconocido: '?'
+[Error léxico] L47:C9 → Caracter no reconocido: '¡'
+[Error léxico] L47:C10 → Caracter no reconocido: '¿'
+[Error léxico] L47:C11 → Caracter no reconocido: '@'
+[Error léxico] L47:C12 → Caracter no reconocido: '`'
+[Error léxico] L47:C13 → Caracter no reconocido: '~'
+[Error léxico] L47:C14 → Caracter no reconocido: '¨'
+[Error léxico] L47:C15 → Caracter no reconocido: '´'
+[Error léxico] L47:C16 → Caracter no reconocido: '['
+[Error léxico] L47:C17 → Caracter no reconocido: ']'
+
+******************* Errores sintácticos *******************
+[Error sintáctico] L7:C1 -> Se esperaba 'main' pero se encontró 'número entero'

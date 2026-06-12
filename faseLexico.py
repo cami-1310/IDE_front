@@ -18,6 +18,8 @@ class Estado(Enum):
     posibleOpLogico=auto()
     posibleIncremento=auto()
     posibleDecremento=auto()
+    posibleMayor=auto()
+    posibleMenor=auto()
     hecho=auto()
 
 class TokenType(Enum):
@@ -28,10 +30,11 @@ class TokenType(Enum):
     end_word=auto()
     do_word=auto()
     while_word=auto()
-    switch_word=auto()
-    case_word=auto()
+    then_word=auto()
     int_word=auto()
     float_word=auto()
+    bool_word=auto()
+    bool_value=auto()
     main_word=auto()
     cin_word=auto()
     cout_word=auto()
@@ -57,6 +60,8 @@ class TokenType(Enum):
     opAnd=auto()
     opOr=auto()
     opNot=auto()
+    opIn=auto()
+    opOut=auto()
     parentesisDer=auto()
     parentesisIzq=auto()
     llaveDer=auto()
@@ -72,17 +77,19 @@ reserved_words={
     "end":    TokenType.end_word,
     "do":     TokenType.do_word,
     "while":  TokenType.while_word,
-    "switch": TokenType.switch_word,
-    "case":   TokenType.case_word,
+    "then":   TokenType.then_word,
     "int":    TokenType.int_word,
     "float":  TokenType.float_word,
+    "bool":   TokenType.bool_word,
+    "true":   TokenType.bool_value,
+    "false":  TokenType.bool_value, 
     "main":   TokenType.main_word,
     "cin":    TokenType.cin_word,
     "cout":   TokenType.cout_word,
 }
 
 class TokenResult:
-    def __init__(self, tipo, lexema, linea, columna,index_final):
+    def __init__(self, tipo, lexema, linea, columna, index_final):
         self.tipo=tipo
         self.lexema=lexema
         self.linea=linea
@@ -101,8 +108,10 @@ class Token:
         self.index=0
         self.linea=1
         self.columna=1
+        self.errores=[]
 
     def cargarCodigo(self):
+        #se lee lo que hay en el text area del editor
         self.codigo=self.texto.get("1.0", "end-1c")
         self.index=0
         self.linea=1
@@ -158,7 +167,11 @@ class Token:
                 elif(c=="'"):
                     guardar=False
                     estado=Estado.posibleCaracter
-                elif(c in ('!', '<', '>', '=')):
+                elif(c=='>'):
+                    estado=Estado.posibleMayor
+                elif(c=='<'):
+                    estado=Estado.posibleMenor
+                elif(c in ('!', '=')):
                     estado=Estado.posibleOpLogico
                 else:
                     estado=Estado.hecho
@@ -173,7 +186,7 @@ class Token:
                     elif(c=='%'): tokenActual=TokenType.modulo
                     else:
                         tokenActual=TokenType.error
-                        self.reportarError(f"Caracter no reconocido: '{c}'", token_linea, token_columna)
+                        self.errorLexico(f"Caracter no reconocido: '{c}'", token_linea, token_columna)
 
             elif(estado==Estado.entradaID):
                 if(c is not None and (c.isalpha() or c.isdigit())):
@@ -206,7 +219,7 @@ class Token:
                     guardar=False
                     estado=Estado.hecho
                     tokenActual=TokenType.error
-                    self.reportarError(f"Número mal formado: '{lexema}' (punto sin decimales)", token_linea, token_columna)
+                    self.errorLexico(f"Número mal formado: '{lexema}' (punto sin decimales)", token_linea, token_columna)
 
             elif(estado==Estado.numFlotante):
                 if(c is not None and c.isdigit()):
@@ -234,6 +247,7 @@ class Token:
                     estado=Estado.hecho
 
             elif(estado==Estado.cul):
+                #comentario de una sola línea
                 if(c=='\n' or c is None):
                     guardar=False
                     tokenActual=TokenType.comentario
@@ -242,8 +256,9 @@ class Token:
                     pass
 
             elif(estado==Estado.cml):
+                #comentario de múltiples lineas
                 if(c is None):
-                    self.reportarError("Comentario multilínea sin cerrar", token_linea, token_columna)
+                    self.errorLexico("Comentario multilínea sin cerrar", token_linea, token_columna)
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
@@ -253,13 +268,14 @@ class Token:
                     pass
 
             elif(estado==Estado.pfc):
+                #posible final de comentario
                 if(c=='/'):
                     lexema+=c
                     guardar=False
                     tokenActual=TokenType.comentario
                     estado=Estado.hecho
                 elif(c is None):
-                    self.reportarError("Comentario multilínea sin cerrar", token_linea, token_columna)
+                    self.errorLexico("Comentario multilínea sin cerrar", token_linea, token_columna)
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
@@ -275,7 +291,7 @@ class Token:
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
-                    self.reportarError("Cadena sin cerrar", token_linea, token_columna)
+                    self.errorLexico("Cadena sin cerrar", token_linea, token_columna)
 
             elif(estado==Estado.posibleCaracter):
                 if(c=="'"):
@@ -286,7 +302,7 @@ class Token:
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
-                    self.reportarError("Caracter mal declarado", token_linea, token_columna)
+                    self.errorLexico("Caracter mal declarado", token_linea, token_columna)
                 else:
                     estado=Estado.caracter
 
@@ -299,7 +315,7 @@ class Token:
                     guardar=False
                     tokenActual=TokenType.error
                     estado=Estado.hecho
-                    self.reportarError("Caracter mal declarado", token_linea, token_columna)
+                    self.errorLexico("Caracter mal declarado", token_linea, token_columna)
 
             elif(estado==Estado.posibleAND):
                 if c in (' ', '\t', '\n'):
@@ -315,7 +331,7 @@ class Token:
                     guardar=False
                     lexema='&'                  
                     tokenActual=TokenType.error
-                    self.reportarError("'&' solo no es válido, use '&&'", token_linea, token_columna)
+                    self.errorLexico("'&' solo no es válido, use '&&'", token_linea, token_columna)
                     estado=Estado.hecho
 
             elif(estado==Estado.posibleOR):
@@ -332,7 +348,7 @@ class Token:
                     guardar=False
                     lexema='|'                 
                     tokenActual=TokenType.error
-                    self.reportarError("'|' solo no es válido, use '||'", token_linea, token_columna)
+                    self.errorLexico("'|' solo no es válido, use '||'", token_linea, token_columna)
                     estado=Estado.hecho
 
             elif(estado==Estado.posibleIncremento):
@@ -361,22 +377,60 @@ class Token:
                     tokenActual=TokenType.resta
                     estado=Estado.hecho
 
+            elif(estado==Estado.posibleMayor):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='>'):
+                    guardar=False
+                    lexema='>>'
+                    tokenActual=TokenType.opIn
+                    estado=Estado.hecho
+                elif(c=='='):
+                    guardar=False
+                    lexema='>='
+                    tokenActual=TokenType.mayorIgual
+                    estado=Estado.hecho
+                else:
+                    if(c is not None):
+                        self.regresarC()
+                    guardar=False
+                    lexema='>'
+                    tokenActual=TokenType.mayorQue
+                    estado=Estado.hecho
+            
+            elif(estado==Estado.posibleMenor):
+                if c in (' ', '\t', '\n'):
+                    guardar=False
+                elif(c=='<'):
+                    guardar=False
+                    lexema='<<'
+                    tokenActual=TokenType.opOut
+                    estado=Estado.hecho
+                elif(c=='='):
+                    guardar=False
+                    lexema='<='
+                    tokenActual=TokenType.menorIgual
+                    estado=Estado.hecho
+                else:
+                    if(c is not None):
+                        self.regresarC()
+                    guardar=False
+                    lexema='<'
+                    tokenActual=TokenType.menorQue
+                    estado=Estado.hecho
+
             elif(estado==Estado.posibleOpLogico):
                 if c in (' ', '\t', '\n'):
                     guardar=False
                 elif(c=='='):
                     if(lexema=='!'): tokenActual=TokenType.diferente
-                    elif(lexema=='<'): tokenActual=TokenType.menorIgual
-                    elif(lexema=='>'): tokenActual=TokenType.mayorIgual
                     elif(lexema=='='): tokenActual=TokenType.igual
                     estado=Estado.hecho
                 else:
                     if(c is not None):
                         self.regresarC()
                     guardar=False
-                    if(lexema=='<'): tokenActual=TokenType.menorQue
-                    elif(lexema=='>'): tokenActual=TokenType.mayorQue
-                    elif(lexema=='='): tokenActual=TokenType.asignacion
+                    if(lexema=='='): tokenActual=TokenType.asignacion
                     elif(lexema=='!'): tokenActual=TokenType.opNot
                     estado=Estado.hecho
 
@@ -384,17 +438,8 @@ class Token:
                 lexema+=c
         return TokenResult(tokenActual, lexema, token_linea, token_columna, self.index)
 
-    def limpiarErrores(self):
-        if self.bottom_panel:
-            try:
-                self.bottom_panel.limpiar_errores_lexicos() 
-            except Exception:
-                pass
-
     def tokenizar_todo(self):
         self.cargarCodigo()
-        if self.bottom_panel:          # ← agrega estas dos líneas
-            self.bottom_panel.clean_errores_lexicos()
         tokens = []
         while True:
             tok = self.getToken()
@@ -426,10 +471,6 @@ class Token:
             else:
                 self.columna-=1
 
-    def reportarError(self, mensaje, linea, columna):
+    def errorLexico(self, mensaje, linea, columna):
         texto_error=f"[Error léxico] L{linea}:C{columna} → {mensaje}"
-        if self.bottom_panel:
-            try:
-                self.bottom_panel.add_error_lexico(texto_error)
-            except Exception:
-                pass
+        self.errores.append(texto_error)

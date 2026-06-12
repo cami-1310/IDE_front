@@ -1,0 +1,42 @@
+main {
+    //error, no se puede inicializar en la declaracion
+    int x = 5 ;
+    //error, se espera un igual despues del id x: x=5;
+    x 5 ;
+    //error, se espera un valor despues del símbolo +: x=a+b;
+    x = a + ;
+    //error, se espera un valor despues del símbolo =: x=a*b;
+    x = * b ;
+    //error, falta el ')': x=(a+b);
+    x = ( a + b ;
+    //error, falta el then
+    if x > 0 
+	x = 1 ; 
+    end ;
+    //error, se espera un = despues del id a, solo es valido a=a++;
+    a++;
+    if x > 0 then 
+	x = 1 ;
+    	while x > 0 
+	    x = x - 1 ;
+    	    do x = x + 1 ;
+                //error, en la gramatica solo es valido cin >> id;
+                //entonces, despues de la x se espera ;
+    	    	cin >> x + 1 ;
+	    	//error, se espera >> despues del cin
+    	    	cin x ;
+	    	//error, se espera << despues del cout
+    	    	cout x ;
+	    	//error, se espera un valor despues de <<
+    	    	cout << ;
+     		do x = x + 1 ;
+     		//error, se espera ; al final de la expresion
+     		while x < 10
+    	end;
+                //lo que encuentra en lugar de ; es end
+                //y reporta que se esperaba ; y se encuentra un end
+                //pero no se pierde el end porque puede ser de alguien mas
+    	    //error, falta el while para el do-while
+    	//la etiqueta de la linea 35 (end;) cierra correctamente el while
+    //error, se espera el end para el if y encuentra }
+}
