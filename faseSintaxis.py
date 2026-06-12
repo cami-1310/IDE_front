@@ -279,7 +279,7 @@ class Parser:
         if not self.consumir(TokenType.do_word):
             self.sincronizar()
             return nodo
-        nodo.agregar(self.bloqueDo())
+        nodo.agregar(self.bloque())
         if not self.consumir(TokenType.while_word):
             self.sincronizar()
             return nodo
@@ -287,48 +287,6 @@ class Parser:
         if not self.consumir(TokenType.puntoComa):
             self.sincronizar()
         return nodo
-
-    def bloqueDo(self):
-        nodo = NodoAST("Bloque")
-        tokens_fin = {
-            TokenType.llaveDer,
-            TokenType.end_word,
-            TokenType.else_word,
-            TokenType.endfile
-        }
-        while self.token_actual().tipo not in tokens_fin:
-            if self.es(TokenType.while_word):
-                if self.esCierreDelDo():
-                    break           # es el while de cierre, salir
-                else:
-                    nodo.agregar(self.iteracion())  # es un while interno
-            else:
-                nodo.agregar(self.elemento())
-        return nodo
-
-    def esCierreDelDo(self):
-        pos_guardada = self.pos
-        self.pos += 1  # saltar el while
-
-        profundidad = 0
-        while self.pos < len(self.tokens):
-            tipo = self.tokens[self.pos].tipo
-            if tipo == TokenType.parentesisIzq:
-                profundidad += 1
-            elif tipo == TokenType.parentesisDer:
-                profundidad -= 1
-            elif tipo == TokenType.puntoComa and profundidad == 0:
-                self.pos = pos_guardada
-                return True   # encontró ; → es cierre del do
-            elif tipo == TokenType.end_word and profundidad == 0:
-                self.pos = pos_guardada
-                return False  # encontró end → es iteracion interna
-            elif tipo == TokenType.endfile:
-                break
-            self.pos += 1
-
-        self.pos = pos_guardada
-        return False
 
     def sentIn(self):
         nodo = NodoAST("sent_in")
@@ -543,12 +501,6 @@ class Parser:
             tok = self.token_actual()
             self.consumir(TokenType.identificador)
             nodo.agregar(NodoAST("id", tok.lexema))
-            if self.es(TokenType.incremento):
-                self.consumir(TokenType.incremento)
-                nodo.agregar(NodoAST("postfijo", "++"))
-            elif self.es(TokenType.decremento):
-                self.consumir(TokenType.decremento)
-                nodo.agregar(NodoAST("postfijo", "--"))
         elif self.es(TokenType.bool_value):
             tok = self.token_actual()
             self.consumir(TokenType.bool_value)

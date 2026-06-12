@@ -59,16 +59,15 @@ class RightPanel:
             orient="vertical",
             command=self.tab_sintactico.yview
         )
-        self.tab_sintactico.configure(yscrollcommand=scroll_sintactico.set)
-        self.tab_sintactico.pack(
-            side="left",
-            fill="both",
-            expand=True
+        scroll_sintactico_x = ttk.Scrollbar(
+            self.frame_sintactico,
+            orient="horizontal",
+            command=self.tab_sintactico.xview
         )
-        scroll_sintactico.pack(
-            side="right",
-            fill="y"
-        )
+        self.tab_sintactico.configure(yscrollcommand=scroll_sintactico.set, xscrollcommand=scroll_sintactico_x.set)
+        scroll_sintactico_x.pack(side="bottom", fill="x")
+        scroll_sintactico.pack(side="right", fill="y")
+        self.tab_sintactico.pack(side="left", fill="both", expand=True)
 
         # tabs que aun no se implementan
         self.tab_semantico = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
