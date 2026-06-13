@@ -248,6 +248,7 @@ class Parser:
         #rama then
         then_nodo = NodoAST("then")
         then_nodo.agregar(self.bloque())
+        nodo.agregar(then_nodo)
         if(self.es(TokenType.else_word)):
             self.consumir(TokenType.else_word)
             else_nodo = NodoAST("else")
@@ -279,7 +280,7 @@ class Parser:
         if not self.consumir(TokenType.do_word):
             self.sincronizar()
             return nodo
-        nodo.agregar(self.bloque())
+        nodo.agregar(self.bloqueDo())
         if not self.consumir(TokenType.while_word):
             self.sincronizar()
             return nodo
@@ -288,6 +289,44 @@ class Parser:
             self.sincronizar()
         return nodo
 
+    def bloqueDo(self):
+        nodo = NodoAST("Bloque")
+        while not self.es(TokenType.endfile):
+            if self.es(TokenType.while_word) and self.esCierreDelDo():
+                break
+            nodo.agregar(self.elemento())
+        return nodo
+    
+    def esCierreDelDo(self):
+        pos_original = self.pos
+        # debe comenzar con while
+        if not self.es(TokenType.while_word):
+            return False
+        self.pos += 1
+        # buscar el cierre del paréntesis externo
+        profundidad = 0
+
+        while self.pos < len(self.tokens):
+            tok = self.tokens[self.pos]
+            if tok.tipo == TokenType.parentesisIzq:
+                profundidad += 1
+            elif tok.tipo == TokenType.parentesisDer:
+                profundidad -= 1
+                if profundidad == 0:
+                    siguiente = (
+                        self.tokens[self.pos + 1]
+                        if self.pos + 1 < len(self.tokens)
+                        else None
+                    )
+                    self.pos = pos_original
+                    return (
+                        siguiente is not None and
+                        siguiente.tipo == TokenType.puntoComa
+                    )
+            self.pos += 1
+        self.pos = pos_original
+        return False
+    
     def sentIn(self):
         nodo = NodoAST("sent_in")
         if not self.consumir(TokenType.cin_word):
@@ -368,100 +407,100 @@ class Parser:
 
     def sentExpresion(self):
         self.errorExp = False
-        nodo = NodoAST("sent_expresion")
         if self.es(TokenType.puntoComa):
             self.consumir(TokenType.puntoComa)
-            return nodo
+            return None
         hijo = self.expresionLogica()
-        nodo.agregar(hijo)
         if self.errorExp:
             self.sincronizar()
-            return nodo
+            return hijo
         if not self.consumir(TokenType.puntoComa):
             self.sincronizar()
-        return nodo
+        return hijo
         
     def expresionLogica(self):
-        nodo = NodoAST("expresion_logica")
-        nodo.agregar(self.expresionOr())
-        return nodo 
+        return self.expresionOr()
 
     def expresionOr(self):
-        nodo = NodoAST("expresion_or")
-        nodo.agregar(self.expresionAnd())
+        izq = self.expresionAnd()
         while self.es(TokenType.opOr):
             self.consumir(TokenType.opOr)
-            op = NodoAST("op", "||")
-            op.agregar(nodo.hijos[-1] if nodo.hijos else None)
-            nodo.agregar(NodoAST("op", "||"))
+            nodo = NodoAST("op", "||")
+            nodo.agregar(izq)
             nodo.agregar(self.expresionAnd())
-        return nodo
+            izq = nodo 
+        return izq
 
     def expresionAnd(self):
-        nodo = NodoAST("expresion_and")
-        nodo.agregar(self.expresion())
+        izq = self.expresion()
         while self.es(TokenType.opAnd):
             self.consumir(TokenType.opAnd)
-            nodo.agregar(NodoAST("op", "&&"))
+            nodo = NodoAST("op", "&&")
+            nodo.agregar(izq)
             nodo.agregar(self.expresion())
-        return nodo
+            izq = nodo
+        return izq
 
     def expresion(self):
-        nodo = NodoAST("expresion")
-        nodo.agregar(self.expresionSimple())
+        izq = self.expresionSimple()
         if (self.es(TokenType.menorQue) or self.es(TokenType.mayorQue) or
                 self.es(TokenType.menorIgual) or self.es(TokenType.mayorIgual) or
                 self.es(TokenType.igual) or self.es(TokenType.diferente)):
-            nodo.agregar(self.relOp())
-            nodo.agregar(self.expresionSimple())
-        return nodo
+            op = self.relOp()
+            op.agregar(izq)
+            op.agregar(self.expresionSimple())
+            return op  # rel_op es la raíz, operandos son hijos
+        return izq
 
     def relOp(self):
         tok = self.token_actual()
         if self.es(TokenType.menorQue):
             self.consumir(TokenType.menorQue)
-            return NodoAST("rel_op", "<")
+            return NodoAST("op", "<")
         elif self.es(TokenType.mayorQue):
             self.consumir(TokenType.mayorQue)
-            return NodoAST("rel_op", ">")
+            return NodoAST("op", ">")
         elif self.es(TokenType.menorIgual):
             self.consumir(TokenType.menorIgual)
-            return NodoAST("rel_op", "<=")
+            return NodoAST("op", "<=")
         elif self.es(TokenType.mayorIgual):
             self.consumir(TokenType.mayorIgual)
-            return NodoAST("rel_op", ">=")
+            return NodoAST("op", ">=")
         elif self.es(TokenType.igual):
             self.consumir(TokenType.igual)
-            return NodoAST("rel_op", "==")
+            return NodoAST("op", "==")
         elif self.es(TokenType.diferente):
             self.consumir(TokenType.diferente)
-            return NodoAST("rel_op", "!=")
+            return NodoAST("op", "!=")
         else:
             self.errorSintactico(tok, None, "Se esperaba operador relacional")
-            return NodoAST("rel_op", "?")
+            return NodoAST("op", "?")
 
     def expresionSimple(self):
-        nodo = NodoAST("expresion_simple")
-        nodo.agregar(self.termino())
+        izq = self.termino()
         while self.es(TokenType.suma) or self.es(TokenType.resta):
             if self.es(TokenType.suma):
                 self.consumir(TokenType.suma)
-                nodo.agregar(NodoAST("op", "+"))
-            elif self.es(TokenType.resta):
+                nodo = NodoAST("op", "+")
+            else:
                 self.consumir(TokenType.resta)
-                nodo.agregar(NodoAST("op", "-"))
+                nodo = NodoAST("op", "-")
+            nodo.agregar(izq)
             nodo.agregar(self.termino())
-        return nodo
+            izq = nodo
+        return izq
 
     def termino(self):
-        nodo = NodoAST("termino")
-        nodo.agregar(self.factor())
+        izq = self.factor()
         while (self.es(TokenType.multiplicacion) or
-               self.es(TokenType.division) or
-               self.es(TokenType.modulo)):
-            nodo.agregar(self.multOp())
+            self.es(TokenType.division) or
+            self.es(TokenType.modulo)):
+            nodo = self.multOp()
+            nodo.agregar(izq)
             nodo.agregar(self.factor())
-        return nodo
+            izq = nodo
+        return izq
+
     
     def multOp(self):
         if self.es(TokenType.multiplicacion):
@@ -475,42 +514,55 @@ class Parser:
             return NodoAST("op", "%")
 
     def factor(self):
-        nodo = NodoAST("factor")
-        nodo.agregar(self.componente())
+        izq = self.componente()
         if self.es(TokenType.potencia):
             self.consumir(TokenType.potencia)
-            nodo.agregar(NodoAST("op", "^"))
+            nodo = NodoAST("op", "^")
+            nodo.agregar(izq)
             nodo.agregar(self.factor())
-        return nodo
+            return nodo
+        return izq
     
     def componente(self):
-        nodo = NodoAST("componente")
         if self.es(TokenType.parentesisIzq):
             self.consumir(TokenType.parentesisIzq)
-            nodo.agregar(self.expresionLogica())
+            nodo = self.expresionLogica()  # los paréntesis desaparecen
             self.consumir(TokenType.parentesisDer)
+            return nodo
         elif self.es(TokenType.numero_entero):
             tok = self.token_actual()
             self.consumir(TokenType.numero_entero)
-            nodo.agregar(NodoAST("numero", tok.lexema))
+            return NodoAST("numero", tok.lexema)
         elif self.es(TokenType.numero_flotante):
             tok = self.token_actual()
             self.consumir(TokenType.numero_flotante)
-            nodo.agregar(NodoAST("numero", tok.lexema))
+            return NodoAST("numero", tok.lexema)
         elif self.es(TokenType.identificador):
             tok = self.token_actual()
             self.consumir(TokenType.identificador)
-            nodo.agregar(NodoAST("id", tok.lexema))
+            nodo = NodoAST("id", tok.lexema)
+            if self.es(TokenType.incremento):
+                self.consumir(TokenType.incremento)
+                wrapper = NodoAST("op", "++")
+                wrapper.agregar(nodo)
+                return wrapper
+            elif self.es(TokenType.decremento):
+                self.consumir(TokenType.decremento)
+                wrapper = NodoAST("op", "--")
+                wrapper.agregar(nodo)
+                return wrapper
+            return nodo
         elif self.es(TokenType.bool_value):
             tok = self.token_actual()
             self.consumir(TokenType.bool_value)
-            nodo.agregar(NodoAST("bool", tok.lexema))
+            return NodoAST("bool", tok.lexema)
         elif self.es(TokenType.opNot):
             self.consumir(TokenType.opNot)
-            nodo.agregar(NodoAST("op", "!"))
+            nodo = NodoAST("op", "!")
             nodo.agregar(self.componente())
+            return nodo
         else:
             tok = self.token_actual()
             self.errorSintactico(tok, None, f"Se esperaba un valor pero se encontró '{tok.lexema}'")
             self.errorExp = True
-        return nodo
+            return NodoAST("error", tok.lexema)

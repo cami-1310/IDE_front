@@ -54,6 +54,7 @@ class RightPanel:
         )
         
         self.tab_sintactico = ttk.Treeview(self.frame_sintactico, style="Dark.Treeview", show="tree")
+        self.tab_sintactico.column("#0", width=2000, stretch=False)
         scroll_sintactico = ttk.Scrollbar(
             self.frame_sintactico,
             orient="vertical",
