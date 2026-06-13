@@ -127,15 +127,21 @@ class TopMenu:
 
     def cerrarArchivo(self):
         # mensaje de si desea guardar
-        resp = messagebox.askyesno("Cerrar", "¿Deseas guardar los cambios en el archivo antes de cerrarlo?")
-        if resp:
+        resp = messagebox.askyesnocancel("Cerrar", "¿Deseas guardar los cambios en el archivo antes de cerrarlo?")
+        if resp is True:
             self.guardarArchivo()
-
-        self.texto.delete(1.0, tk.END)
-        self.ruta_archivo = None
-        self.ruta_archivoTokens = None
-        self.ruta_archivoErrores = None
-        self.limpiar_secciones()
+            self.texto.delete(1.0, tk.END)
+            self.ruta_archivo = None
+            self.ruta_archivoTokens = None
+            self.ruta_archivoErrores = None
+            self.limpiar_secciones()
+        elif resp is False:
+            self.texto.delete(1.0, tk.END)
+            self.ruta_archivo = None
+            self.ruta_archivoTokens = None
+            self.ruta_archivoErrores = None
+            self.limpiar_secciones()
+        # si no elige ninguna es porque dio cancelar
 
     def guardarArchivo(self):
         # si el archivo ya tiene una ruta

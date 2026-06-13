@@ -2,5 +2,4 @@
 Sin errores léxicos.
 
 ******************* Errores sintácticos *******************
-[Error sintáctico] L6:C1 -> Se esperaba ';' pero se encontró 'identificador'
-[Error sintáctico] L12:C13 -> Se esperaba ')' pero se encontró ';'
+[Error sintáctico] L19:C17 -> Se esperaba un valor pero se encontró ')'
