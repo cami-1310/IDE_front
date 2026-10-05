@@ -87,6 +87,11 @@ class Parser:
     def es(self, tipo):
         return self.token_actual().tipo == tipo
 
+    def esTipo(self):
+        return (self.es(TokenType.int_word) or
+                self.es(TokenType.float_word) or
+                self.es(TokenType.bool_word))
+    
     def consumir(self, tipo):
         tok = self.token_actual()
         if(tok.tipo == tipo):
@@ -122,10 +127,8 @@ class Parser:
             return nodo
         if not self.consumir(TokenType.llaveIzq):
             return nodo
-        nodo.agregar(self.bloque({
-            TokenType.llaveDer, 
-            TokenType.endfile
-        }))
+        nodo.agregar(self.listaDeclaracion())
+        nodo.agregar(self.listaSentencias())
         if not self.consumir(TokenType.llaveDer):
             return nodo
         if not self.es(TokenType.endfile):
@@ -133,37 +136,32 @@ class Parser:
             self.errorSintactico(tok, None, f"Se esperaba fin de archivo pero se encontró '{tok.lexema}'")
         return nodo
 
-    def bloque(self, extras=None):
-        nodo = NodoAST("Bloque")
+    def listaDeclaracion(self):
+        nodo = NodoAST("ListaDeclaracion")
+        while self.esTipo():
+            nodo.agregar(self.declaracionVariable())
+        return nodo
+    
+    def listaSentencias(self, en_do=False):
+        nodo = NodoAST("ListaSentencias")
         tokens_fin = {
             TokenType.llaveDer,
             TokenType.end_word,
             TokenType.else_word,
             TokenType.endfile
         }
-        if(extras is not None):
-            tokens_fin |= extras
-        while (self.token_actual().tipo not in tokens_fin):
-            nodo.agregar(self.elemento())
+        while self.token_actual().tipo not in tokens_fin:
+            if en_do and self.es(TokenType.while_word) and self.esCierreDelDo():
+                break
+            if self.esTipo():
+                # declaración fuera de lugar: se reporta y se analiza para recuperarse
+                tok = self.token_actual()
+                self.errorSintactico(tok, None,
+                    "Las declaraciones solo pueden aparecer al inicio del programa, antes de las sentencias")
+                self.declaracionVariable()
+                continue
+            nodo.agregar(self.sentencia())
         return nodo
-
-    def elemento(self):
-        if (self.es(TokenType.int_word) or 
-             self.es(TokenType.float_word) or 
-             self.es(TokenType.bool_word)):
-            return self.declaracionVariable()
-        elif(self.es(TokenType.if_word) or 
-             self.es(TokenType.while_word) or 
-             self.es(TokenType.do_word) or 
-             self.es(TokenType.cin_word) or 
-             self.es(TokenType.cout_word) or
-             self.es(TokenType.identificador)):
-            return self.sentencia()
-        else:
-            tok = self.token_actual()
-            self.errorSintactico(tok, None, f"Token inesperado: '{tok.lexema}'")
-            self.pos += 1
-            return None
 
     def declaracionVariable(self):
         nodo = NodoAST("Declaracion")
