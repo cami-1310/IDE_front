@@ -20,7 +20,6 @@ COLOR_5   = '#ce9178'  # op. aritmeticos → naranja
 COLOR_6   = '#c586c0'  # op. relacionales y logicos → lila
 COLOR_SIM = "#fcf7fa"  # simbolos y asignacion
 COLOR_ERR = '#f44747'  # errores
-# Cerca de tus constantes de colores
 FUENTE_GENERAL = ('Consolas', 11)
 
 PALABRAS_RESERVADAS = (

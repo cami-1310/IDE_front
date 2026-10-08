@@ -111,7 +111,7 @@ class Parser:
             TokenType.llaveDer,
             TokenType.endfile
         }
-        # Avanzar hasta encontrar un punto seguro
+        #avanzar hasta encontrar un punto seguro
         while not self.es(TokenType.endfile):
             if self.token_actual().tipo in seguros:
                 if self.token_actual().tipo == TokenType.puntoComa:
@@ -188,11 +188,7 @@ class Parser:
         elif self.es(TokenType.cout_word):
             return self.sentOut()
         elif self.es(TokenType.identificador):
-            siguiente = self.tokens[self.pos + 1].tipo
-            if siguiente in (TokenType.incremento, TokenType.decremento):
-                return self.sentPostfijo()
-            else:
-                return self.asignacion()
+            return self.asignacion()
         else: 
             tok = self.token_actual()
             self.errorSintactico(tok, None, f"Sentencia inesperada: '{tok.lexema}'")
@@ -245,12 +241,12 @@ class Parser:
             return nodo
         #rama then
         then_nodo = NodoAST("then")
-        then_nodo.agregar(self.bloque())
+        then_nodo.agregar(self.listaSentencias())
         nodo.agregar(then_nodo)
         if(self.es(TokenType.else_word)):
             self.consumir(TokenType.else_word)
             else_nodo = NodoAST("else")
-            else_nodo.agregar(self.bloque())
+            else_nodo.agregar(self.listaSentencias())
             nodo.agregar(else_nodo)
         if not self.consumir(TokenType.end_word):
             self.sincronizar()
@@ -265,7 +261,7 @@ class Parser:
             self.sincronizar()
             return nodo
         nodo.agregar(self.expresionLogica())
-        nodo.agregar(self.bloque())
+        nodo.agregar(self.listaSentencias())
         if not self.consumir(TokenType.end_word):
             self.sincronizar()
             return nodo
@@ -278,7 +274,7 @@ class Parser:
         if not self.consumir(TokenType.do_word):
             self.sincronizar()
             return nodo
-        nodo.agregar(self.bloqueDo())
+        nodo.agregar(self.listaSentencias(en_do=True))
         if not self.consumir(TokenType.while_word):
             self.sincronizar()
             return nodo
@@ -286,44 +282,22 @@ class Parser:
         if not self.consumir(TokenType.puntoComa):
             self.sincronizar()
         return nodo
-
-    def bloqueDo(self):
-        nodo = NodoAST("Bloque")
-        while not self.es(TokenType.endfile):
-            if self.es(TokenType.while_word) and self.esCierreDelDo():
-                break
-            nodo.agregar(self.elemento())
-        return nodo
     
     def esCierreDelDo(self):
-        pos_original = self.pos
         # debe comenzar con while
         if not self.es(TokenType.while_word):
             return False
+        pos_original = self.pos
+        errores_original = len(self.errores)
+        errorExp_original = self.errorExp
         self.pos += 1
-        # buscar el cierre del paréntesis externo
-        profundidad = 0
-
-        while self.pos < len(self.tokens):
-            tok = self.tokens[self.pos]
-            if tok.tipo == TokenType.parentesisIzq:
-                profundidad += 1
-            elif tok.tipo == TokenType.parentesisDer:
-                profundidad -= 1
-                if profundidad == 0:
-                    siguiente = (
-                        self.tokens[self.pos + 1]
-                        if self.pos + 1 < len(self.tokens)
-                        else None
-                    )
-                    self.pos = pos_original
-                    return (
-                        siguiente is not None and
-                        siguiente.tipo == TokenType.puntoComa
-                    )
-            self.pos += 1
+        self.expresionLogica()
+        cierra = self.es(TokenType.puntoComa)
+        #restaurar el estado
         self.pos = pos_original
-        return False
+        del self.errores[errores_original:]
+        self.errorExp = errorExp_original
+        return cierra
     
     def sentIn(self):
         nodo = NodoAST("sent_in")
@@ -373,21 +347,6 @@ class Parser:
                 self.consumir(TokenType.cadena)
                 nodo.agregar(NodoAST("cadena", tok.lexema))
         return nodo
-
-    def sentPostfijo(self):
-        nodo = NodoAST("sent_postfijo")
-        tok = self.token_actual()
-        if self.consumir(TokenType.identificador):
-            nodo.agregar(NodoAST("id", tok.lexema))
-        if self.es(TokenType.incremento):
-            self.consumir(TokenType.incremento)
-            nodo.agregar(NodoAST("postfijo", "++"))
-        elif self.es(TokenType.decremento):
-            self.consumir(TokenType.decremento)
-            nodo.agregar(NodoAST("postfijo", "--"))
-        if not self.consumir(TokenType.puntoComa):
-            self.sincronizar()
-        return nodo
     
     def asignacion(self):
         nodo = NodoAST("Asignacion")
@@ -400,26 +359,16 @@ class Parser:
         if not self.consumir(TokenType.asignacion):
             self.sincronizar()
             return nodo
-        nodo.agregar(self.sentExpresion())
-        return nodo
-
-    def sentExpresion(self):
         self.errorExp = False
-        if self.es(TokenType.puntoComa):
-            self.consumir(TokenType.puntoComa)
-            return None
-        hijo = self.expresionLogica()
+        nodo.agregar(self.expresionLogica())
         if self.errorExp:
             self.sincronizar()
-            return hijo
+            return nodo
         if not self.consumir(TokenType.puntoComa):
             self.sincronizar()
-        return hijo
-        
-    def expresionLogica(self):
-        return self.expresionOr()
+        return nodo
 
-    def expresionOr(self):
+    def expresionLogica(self):
         izq = self.expresionAnd()
         while self.es(TokenType.opOr):
             self.consumir(TokenType.opOr)
