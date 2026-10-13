@@ -1,14 +1,26 @@
 from faseLexico import TokenType
+import copy
 
 class NodoAST:
-    def __init__(self, tipo, valor=None):
-        self.tipo = tipo
-        self.valor = valor
+    def __init__(self, tipo, valor=None, lin=None, col=None):
+        self.tipo = tipo   # tipo de nodo
+        self.valor = valor #lexema
+        self.lin = lin
+        self.col = col
+        # para las anotaciones semanticas
+        self.tipoDato = None   #tipo que resulta (int/float/bool/error)
+        self.valorCalc = None  #valor calculado si es constante
+        self.conv = None       #conversion de tipo -> coercibilidad
         self.hijos = []
 
+    # método para agregar nodos al AST
     def agregar(self, hijo):
         if hijo is not None:
             self.hijos.append(hijo)
+
+    # método para generar la copia anotada del AST
+    def copiar(self):
+        return copy.deepcopy(self)
 
 TOKEN_NAMES = {
     TokenType.endfile: "end of file",
@@ -69,7 +81,7 @@ class Parser:
         self.raiz = None
 
     def token_actual(self):
-        #hay que leer el archivo de tokens y conservar el actual
+        # hay que leer el archivo de tokens y conservar el actual
         if(self.pos < len(self.tokens)):
             return self.tokens[self.pos]
         return self.tokens[-1]
@@ -111,7 +123,7 @@ class Parser:
             TokenType.llaveDer,
             TokenType.endfile
         }
-        #avanzar hasta encontrar un punto seguro
+        # avanzar hasta encontrar un punto seguro
         while not self.es(TokenType.endfile):
             if self.token_actual().tipo in seguros:
                 if self.token_actual().tipo == TokenType.puntoComa:
@@ -151,6 +163,7 @@ class Parser:
             TokenType.endfile
         }
         while self.token_actual().tipo not in tokens_fin:
+            # en_do nos ayuda a identificar la etiqueta de cierre del while 
             if en_do and self.es(TokenType.while_word) and self.esCierreDelDo():
                 break
             if self.esTipo():
@@ -196,15 +209,16 @@ class Parser:
             return None
 
     def tipo(self):
+        tok = self.token_actual()
         if(self.es(TokenType.int_word)):
             self.consumir(TokenType.int_word)
-            return NodoAST("Tipo", "int")
+            return NodoAST("Tipo", "int", tok.linea, tok.columna)
         elif(self.es(TokenType.float_word)):
             self.consumir(TokenType.float_word)
-            return NodoAST("Tipo", "float")
+            return NodoAST("Tipo", "float", tok.linea, tok.columna)
         elif(self.es(TokenType.bool_word)):
             self.consumir(TokenType.bool_word)
-            return NodoAST("Tipo", "bool")
+            return NodoAST("Tipo", "bool", tok.linea, tok.columna)
         else:
             tok = self.token_actual()
             self.errorSintactico(tok, None, "Se esperaba un tipo (int, float, bool)")
@@ -215,16 +229,17 @@ class Parser:
         nodo = NodoAST("Identificador")
         tok = self.token_actual()
         if self.consumir(TokenType.identificador):
-            nodo.agregar(NodoAST("id", tok.lexema))
+            nodo.agregar(NodoAST("id", tok.lexema, tok.linea, tok.columna))
         while(self.es(TokenType.coma)):
             self.consumir(TokenType.coma)
             tok = self.token_actual()
             if self.consumir(TokenType.identificador):
-                nodo.agregar(NodoAST("id", tok.lexema))
+                nodo.agregar(NodoAST("id", tok.lexema, tok.linea, tok.columna))
         return nodo
 
     def seleccion(self):
-        nodo = NodoAST("Seleccion")
+        tok = self.token_actual()
+        nodo = NodoAST("Seleccion", None, tok.linea, tok.columna)
         if not self.consumir(TokenType.if_word):
             self.sincronizar()
             return nodo
@@ -256,7 +271,8 @@ class Parser:
         return nodo
 
     def iteracion(self):
-        nodo = NodoAST("Iteracion")
+        tok = self.token_actual()
+        nodo = NodoAST("Iteracion", None, tok.linea, tok.columna)
         if not self.consumir(TokenType.while_word):
             self.sincronizar()
             return nodo
@@ -270,7 +286,8 @@ class Parser:
         return nodo
 
     def repeticion(self):
-        nodo = NodoAST("Repeticion")
+        tok = self.token_actual()
+        nodo = NodoAST("Repeticion", None, tok.linea, tok.columna)
         if not self.consumir(TokenType.do_word):
             self.sincronizar()
             return nodo
@@ -284,6 +301,7 @@ class Parser:
         return nodo
     
     def esCierreDelDo(self):
+        # aqui se decide su el while es para cerrar un do-while o si inicia una iteración
         # debe comenzar con while
         if not self.es(TokenType.while_word):
             return False
@@ -300,7 +318,8 @@ class Parser:
         return cierra
     
     def sentIn(self):
-        nodo = NodoAST("sent_in")
+        tok = self.token_actual()
+        nodo = NodoAST("sent_in", None, tok.linea, tok.columna)
         if not self.consumir(TokenType.cin_word):
             self.sincronizar()
             return nodo
@@ -309,7 +328,7 @@ class Parser:
             return nodo
         tok = self.token_actual()
         if self.consumir(TokenType.identificador):
-            nodo.agregar(NodoAST("id", tok.lexema))
+            nodo.agregar(NodoAST("id", tok.lexema, tok.linea, tok.columna))
         else:
             self.sincronizar()
             return nodo
@@ -318,7 +337,8 @@ class Parser:
         return nodo
 
     def sentOut(self):
-        nodo = NodoAST("sent_out")
+        tok = self.token_actual()
+        nodo = NodoAST("sent_out", None, tok.linea, tok.columna)
         if not self.consumir(TokenType.cout_word):
             self.sincronizar()
             return nodo
@@ -335,7 +355,7 @@ class Parser:
         if self.es(TokenType.cadena):
             tok = self.token_actual()
             self.consumir(TokenType.cadena)
-            nodo.agregar(NodoAST("cadena", tok.lexema))
+            nodo.agregar(NodoAST("cadena", tok.lexema, tok.linea, tok.columna))
             if self.es(TokenType.opOut):
                 self.consumir(TokenType.opOut)
                 nodo.agregar(self.expresionLogica())
@@ -345,14 +365,14 @@ class Parser:
                 self.consumir(TokenType.opOut)
                 tok = self.token_actual()
                 self.consumir(TokenType.cadena)
-                nodo.agregar(NodoAST("cadena", tok.lexema))
+                nodo.agregar(NodoAST("cadena", tok.lexema, tok.linea, tok.columna))
         return nodo
     
     def asignacion(self):
-        nodo = NodoAST("Asignacion")
         tok = self.token_actual()
+        nodo = NodoAST("Asignacion", None, tok.linea, tok.columna)
         if self.consumir(TokenType.identificador):
-            nodo.agregar(NodoAST("id", tok.lexema))
+            nodo.agregar(NodoAST("id", tok.lexema, tok.linea, tok.columna))
         else:
             self.sincronizar()
             return nodo
@@ -371,8 +391,9 @@ class Parser:
     def expresionLogica(self):
         izq = self.expresionAnd()
         while self.es(TokenType.opOr):
+            tok = self.token_actual()
             self.consumir(TokenType.opOr)
-            nodo = NodoAST("op", "||")
+            nodo = NodoAST("op", "||", tok.linea, tok.columna)
             nodo.agregar(izq)
             nodo.agregar(self.expresionAnd())
             izq = nodo 
@@ -381,8 +402,9 @@ class Parser:
     def expresionAnd(self):
         izq = self.expresion()
         while self.es(TokenType.opAnd):
+            tok = self.token_actual()
             self.consumir(TokenType.opAnd)
-            nodo = NodoAST("op", "&&")
+            nodo = NodoAST("op", "&&", tok.linea, tok.columna)
             nodo.agregar(izq)
             nodo.agregar(self.expresion())
             izq = nodo
@@ -403,35 +425,36 @@ class Parser:
         tok = self.token_actual()
         if self.es(TokenType.menorQue):
             self.consumir(TokenType.menorQue)
-            return NodoAST("op", "<")
+            return NodoAST("op", "<", tok.linea, tok.columna)
         elif self.es(TokenType.mayorQue):
             self.consumir(TokenType.mayorQue)
-            return NodoAST("op", ">")
+            return NodoAST("op", ">", tok.linea, tok.columna)
         elif self.es(TokenType.menorIgual):
             self.consumir(TokenType.menorIgual)
-            return NodoAST("op", "<=")
+            return NodoAST("op", "<=", tok.linea, tok.columna)
         elif self.es(TokenType.mayorIgual):
             self.consumir(TokenType.mayorIgual)
-            return NodoAST("op", ">=")
+            return NodoAST("op", ">=", tok.linea, tok.columna)
         elif self.es(TokenType.igual):
             self.consumir(TokenType.igual)
-            return NodoAST("op", "==")
+            return NodoAST("op", "==", tok.linea, tok.columna)
         elif self.es(TokenType.diferente):
             self.consumir(TokenType.diferente)
-            return NodoAST("op", "!=")
+            return NodoAST("op", "!=", tok.linea, tok.columna)
         else:
             self.errorSintactico(tok, None, "Se esperaba operador relacional")
-            return NodoAST("op", "?")
+            return NodoAST("op", "?", tok.linea, tok.columna)
 
     def expresionSimple(self):
         izq = self.termino()
         while self.es(TokenType.suma) or self.es(TokenType.resta):
+            tok = self.token_actual()  
             if self.es(TokenType.suma):
                 self.consumir(TokenType.suma)
-                nodo = NodoAST("op", "+")
+                nodo = NodoAST("op", "+", tok.linea, tok.columna)
             else:
                 self.consumir(TokenType.resta)
-                nodo = NodoAST("op", "-")
+                nodo = NodoAST("op", "-", tok.linea, tok.columna)
             nodo.agregar(izq)
             nodo.agregar(self.termino())
             izq = nodo
@@ -450,21 +473,23 @@ class Parser:
 
     
     def multOp(self):
+        tok = self.token_actual()
         if self.es(TokenType.multiplicacion):
             self.consumir(TokenType.multiplicacion)
-            return NodoAST("op", "*")
+            return NodoAST("op", "*", tok.linea, tok.columna)
         elif self.es(TokenType.division):
             self.consumir(TokenType.division)
-            return NodoAST("op", "/")
+            return NodoAST("op", "/", tok.linea, tok.columna)
         elif self.es(TokenType.modulo):
             self.consumir(TokenType.modulo)
-            return NodoAST("op", "%")
+            return NodoAST("op", "%", tok.linea, tok.columna)
 
     def factor(self):
         izq = self.componente()
         if self.es(TokenType.potencia):
+            tok = self.token_actual()
             self.consumir(TokenType.potencia)
-            nodo = NodoAST("op", "^")
+            nodo = NodoAST("op", "^", tok.linea, tok.columna)
             nodo.agregar(izq)
             nodo.agregar(self.factor())
             return nodo
@@ -479,37 +504,39 @@ class Parser:
         elif self.es(TokenType.numero_entero):
             tok = self.token_actual()
             self.consumir(TokenType.numero_entero)
-            return NodoAST("numero", tok.lexema)
+            return NodoAST("numero", tok.lexema, tok.linea, tok.columna)
         elif self.es(TokenType.numero_flotante):
             tok = self.token_actual()
             self.consumir(TokenType.numero_flotante)
-            return NodoAST("numero", tok.lexema)
+            return NodoAST("numero", tok.lexema, tok.linea, tok.columna)
         elif self.es(TokenType.identificador):
             tok = self.token_actual()
             self.consumir(TokenType.identificador)
-            nodo = NodoAST("id", tok.lexema)
+            nodo = NodoAST("id", tok.lexema, tok.linea, tok.columna)
             if self.es(TokenType.incremento):
+                op_tok = self.token_actual()
                 self.consumir(TokenType.incremento)
-                wrapper = NodoAST("op", "++")
+                wrapper = NodoAST("op", "++", op_tok.linea, op_tok.columna)
                 wrapper.agregar(nodo)
                 return wrapper
             elif self.es(TokenType.decremento):
+                op_tok = self.token_actual()
                 self.consumir(TokenType.decremento)
-                wrapper = NodoAST("op", "--")
+                wrapper = NodoAST("op", "--", op_tok.linea, op_tok.columna)
                 wrapper.agregar(nodo)
                 return wrapper
             return nodo
         elif self.es(TokenType.bool_value):
             tok = self.token_actual()
             self.consumir(TokenType.bool_value)
-            return NodoAST("bool", tok.lexema)
+            return NodoAST("bool", tok.lexema, tok.linea, tok.columna)
         elif self.es(TokenType.opNot):
             self.consumir(TokenType.opNot)
-            nodo = NodoAST("op", "!")
+            nodo = NodoAST("op", "!", tok.linea, tok.columna)
             nodo.agregar(self.componente())
             return nodo
         else:
             tok = self.token_actual()
             self.errorSintactico(tok, None, f"Se esperaba un valor pero se encontró '{tok.lexema}'")
             self.errorExp = True
-            return NodoAST("error", tok.lexema)
+            return NodoAST("error", tok.lexema, tok.linea, tok.columna)

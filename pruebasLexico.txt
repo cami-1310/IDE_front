@@ -45,7 +45,6 @@ cout
 ''
 //probando simbolos inválidos
 ¬|°_#$&?¡¿@`~¨´[]
-
 //probando colocar operadores de dos caracteres declarados en diferentes lineas
 -
 -

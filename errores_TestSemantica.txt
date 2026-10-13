@@ -1,0 +1,8 @@
+******************* Errores léxicos *******************
+Sin errores léxicos.
+
+******************* Errores sintácticos *******************
+Sin errores sintácticos.
+
+******************* Errores semánticos *******************
+[Error semántico] L3:C5 -> La variable 'x' ya fue declarada en la línea 2

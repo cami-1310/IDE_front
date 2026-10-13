@@ -16,6 +16,7 @@
 [Error léxico] L47:C15 → Caracter no reconocido: '´'
 [Error léxico] L47:C16 → Caracter no reconocido: '['
 [Error léxico] L47:C17 → Caracter no reconocido: ']'
+[Error léxico] L48:C1 → Caracter no reconocido: '.'
 
 ******************* Errores sintácticos *******************
 [Error sintáctico] L7:C1 -> Se esperaba 'main' pero se encontró 'número entero'

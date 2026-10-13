@@ -70,18 +70,38 @@ class RightPanel:
         scroll_sintactico.pack(side="right", fill="y")
         self.tab_sintactico.pack(side="left", fill="both", expand=True)
 
-        # tabs que aun no se implementan
-        self.tab_semantico = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
-                                 wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
+        # tab que mostrará el árbol anotado (análisis semántico)
+        self.frame_semantico = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
+        self.tab_semantico = ttk.Treeview(self.frame_semantico, style="Dark.Treeview", show="tree")
+        self.tab_semantico.column("#0", width=2000, stretch=False)
+        scroll_semantico = ttk.Scrollbar(
+            self.frame_semantico,
+            orient="vertical",
+            command=self.tab_semantico.yview
+        )
+        scroll_semantico_x = ttk.Scrollbar(
+            self.frame_semantico,
+            orient="horizontal",
+            command=self.tab_semantico.xview
+        )
+        self.tab_semantico.configure(yscrollcommand=scroll_semantico.set, xscrollcommand=scroll_semantico_x.set)
+        scroll_semantico_x.pack(side="bottom", fill="x")
+        scroll_semantico.pack(side="right", fill="y")
+        self.tab_semantico.pack(side="left", fill="both", expand=True)
+
+        # tab de la tabla de símbolos (fuente monoespaciada para alinear columnas)
         self.tab_hash_table = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
-                                    wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
+                                    wrap=tk.NONE, relief=tk.FLAT, borderwidth=0,
+                                    font=("Consolas", 10))
+        
+        # tabs que aun no se implementan
         self.tab_codigo_intermedio = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
                                     wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
         
         # Agregar los tabs al notebook
         self.tabs_notebook.add(self.tab_lexico, text="Léxico")
         self.tabs_notebook.add(self.frame_sintactico, text="Sintáctico")
-        self.tabs_notebook.add(self.tab_semantico, text="Semántico")
+        self.tabs_notebook.add(self.frame_semantico, text="Semántico")
         self.tabs_notebook.add(self.tab_hash_table, text="Tabla de Hash")
         self.tabs_notebook.add(self.tab_codigo_intermedio, text="Código Intermedio")
 
@@ -122,3 +142,47 @@ class RightPanel:
         )
         for hijo in nodo.hijos:
             self.insertar_nodo_ast(item, hijo)
+
+    # metodos para mostrar el AST anotdado y la tabla de simbolos
+    def mostrar_analisis_semantico(self, raiz):
+        self.tab_semantico.delete(
+            *self.tab_semantico.get_children()
+        )
+        if raiz is not None:
+            self.insertar_nodo_anotado("", raiz)
+
+    def clean_analisis_semantico(self):
+        self.tab_semantico.delete(
+            *self.tab_semantico.get_children()
+        )
+
+    def insertar_nodo_anotado(self, padre, nodo):
+        texto = nodo.tipo
+        if nodo.valor is not None:
+            texto += f": {nodo.valor}"
+        if nodo.tipoDato is not None:
+            texto += f"   [{nodo.tipoDato}]"
+        if nodo.valorCalc is not None:
+            texto += f"   (valor = {nodo.valorCalc})"
+        if nodo.conv is not None:
+            texto += f"   (conv: {nodo.conv})"
+        item = self.tab_semantico.insert(
+            padre,
+            "end",
+            text=texto,
+            open=True
+        )
+        for hijo in nodo.hijos:
+            self.insertar_nodo_anotado(item, hijo)
+
+    def mostrar_tabla_simbolos(self, contenido):
+        self.tab_hash_table.config(state='normal')
+        self.tab_hash_table.delete('1.0', tk.END)
+        self.tab_hash_table.insert(tk.END, contenido)
+        self.tab_hash_table.config(state='disabled')
+        self.tab_hash_table.see('1.0')
+
+    def clean_tabla_simbolos(self):
+        self.tab_hash_table.config(state='normal')
+        self.tab_hash_table.delete('1.0', tk.END)
+        self.tab_hash_table.config(state='disabled')

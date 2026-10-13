@@ -72,3 +72,18 @@ class BottomPanel:
         self.tab_errores_sintacticos.config(state='normal')
         self.tab_errores_sintacticos.delete('1.0', tk.END)
         self.tab_errores_sintacticos.config(state='disabled')
+
+    def add_error_semantico(self, mensaje, sinErrores):
+        self.tab_errores_semanticos.config(state='normal')
+        if(sinErrores == 1):
+            self.tab_errores_semanticos.tag_config('error', foreground="#c3ff55")
+        else:
+            self.tab_errores_semanticos.tag_config('error', foreground='#ff5555')
+        self.tab_errores_semanticos.insert(tk.END, mensaje + "\n", 'error')
+        self.tab_errores_semanticos.config(state='disabled')
+        self.tab_errores_semanticos.see(tk.END)
+
+    def clean_errores_semanticos(self):
+        self.tab_errores_semanticos.config(state='normal')
+        self.tab_errores_semanticos.delete('1.0', tk.END)
+        self.tab_errores_semanticos.config(state='disabled')

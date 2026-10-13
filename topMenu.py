@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from faseLexico import Token, TokenType, TokenResult
 from faseSintaxis import Parser, NodoAST
+from faseSemantica import AnalizadorSemantico
 
 class TopMenu:
     def __init__(self, root, text_widget, bottom_panel=None, right_panel=None):
@@ -203,6 +204,7 @@ class TopMenu:
     def llamarCompilador(self):
         self.mostrarAnalisisLexico()
         self.mostrarAnalisisSintactico()
+        self.mostrarAnalisisSemantico()
 
     def mostrarAnalisisLexico(self):
         # limpiar antes del analisis
@@ -226,7 +228,7 @@ class TopMenu:
                 # si es un error, no se guarda
                 pass
             elif token.tipo == TokenType.endfile:
-                # enfile significa ya termino de ver el archivo, hay que salir del loop
+                # endfile significa ya termino de ver el archivo, hay que salir del loop
                 break
             else:
                 # si llega aqui, es un token valido, entonces se guarda
@@ -359,9 +361,51 @@ class TopMenu:
             )
 
     def mostrarAnalisisSemantico(self):
-        # por definir
-        pass
+         # limpiar seccion antes del analisis
+        if self.bottom_panel:
+            self.bottom_panel.clean_errores_semanticos()
+        if self.right_panel:
+            self.right_panel.clean_analisis_semantico()
+            self.right_panel.clean_tabla_simbolos()
 
+        # solo se analiza si las fases anteriores terminaron sin errores
+        parser = getattr(self, "parser", None)
+        if self.scanner.errores or parser is None or parser.errores:
+            messagebox.showwarning(
+                "Análisis semántico",
+                "Corrige los errores léxicos y sintácticos antes de ejecutar el análisis semántico."
+            )
+            return
+
+        self.semantico = AnalizadorSemantico(parser.raiz)
+        self.semantico.analizar()
+
+        # los errores se guardan en el archivo, igual que en las fases anteriores
+        self.contenido_errores += "\n******************* Errores semánticos *******************\n"
+        if self.semantico.errores:
+            for error in self.semantico.errores:
+                self.contenido_errores += error + "\n"
+        else:
+            self.contenido_errores += "Sin errores semánticos.\n"
+        if self.ruta_archivoErrores:
+            with open(self.ruta_archivoErrores, "w", encoding="utf-8") as f:
+                f.write(self.contenido_errores)
+
+        # arbol anotado y tabla de símbolos en el panel derecho
+        if self.right_panel:
+            self.right_panel.mostrar_analisis_semantico(self.semantico.raiz)
+            self.right_panel.mostrar_tabla_simbolos(self.semantico.tabla.a_texto())
+            self.right_panel.tabs_notebook.select(self.right_panel.frame_semantico)
+
+        # errores en el panel inferior
+        if self.bottom_panel:
+            if self.semantico.errores:
+                for error in self.semantico.errores:
+                    self.bottom_panel.add_error_semantico(error, 0)
+            else:
+                self.bottom_panel.add_error_semantico("✔ Sin errores semánticos.", 1)
+            self.bottom_panel.tabs_notebook.select(self.bottom_panel.tab_errores_semanticos)
+    
     def mostrarCodigoIntermedio(self):
         # por definir
         pass
