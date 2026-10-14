@@ -123,53 +123,14 @@ class AnalizadorSemantico:
             pos = "L?:C?"
         self.errores.append(f"[Error semántico] {pos} -> {mensaje}")
  
- #   def analizar(self):
- #       if self.raiz is None:
- #           return
- #       for hijo in self.raiz.hijos:
- #           if hijo.tipo == "ListaDeclaracion":
- #               self.pasadaDeclaraciones(hijo)
-        # 2do recorrido (sentencias): tipos de expresiones y sentencias (Kim y Rafa)
-        
-# #-#####################################################################################################
-        #por mientras pa probar lo de tipado de rafa
     def analizar(self):
         if self.raiz is None:
             return
         for hijo in self.raiz.hijos:
             if hijo.tipo == "ListaDeclaracion":
                 self.pasadaDeclaraciones(hijo)
-            elif hijo.tipo == "ListaSentencias":
-                self._recorrido_prueba(hijo)     # PROVISIONAL
-#--------------------------------------------------------------------
-        # por mientrassssssssss borrar cuando este el recorrido de sentencias chido
-    def _recorrido_prueba(self, lista):
-        for s in lista.hijos:
-            if not s.hijos:
-                continue
-            t = s.tipo
-            if t == "Asignacion" and len(s.hijos) == 2:
-                self.tipar_expresion(s.hijos[1])               # primero la derecha
-                self.tabla.marcar_inicializada(s.hijos[0].valor)
-            elif t == "sent_in":
-                self.tabla.marcar_inicializada(s.hijos[0].valor)
-            elif t == "sent_out":
-                for h in s.hijos[0].hijos:
-                    if h.tipo != "cadena":
-                        self.tipar_expresion(h)
-            elif t == "Seleccion":
-                self.tipar_expresion(s.hijos[0])
-                for rama in s.hijos[1:]:
-                    for lista_ in rama.hijos:
-                        self._recorrido_prueba(lista_)
-            elif t == "Iteracion" and len(s.hijos) == 2:
-                self.tipar_expresion(s.hijos[0])
-                self._recorrido_prueba(s.hijos[1])
-            elif t == "Repeticion" and len(s.hijos) == 2:
-                self._recorrido_prueba(s.hijos[0])
-                self.tipar_expresion(s.hijos[1])
-#################################################################################################################
-
+        # 2do recorrido (sentencias): tipos de expresiones y sentencias (Kim y Rafa)
+        
 
     # ── 1er recorrido: declaraciones ──────────────────────────────────────────────
     def pasadaDeclaraciones(self, lista):
