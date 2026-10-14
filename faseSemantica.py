@@ -183,8 +183,8 @@ class AnalizadorSemantico:
             return
         self.tabla.registrar_uso(nombre, nodo.lin)
         nodo.tipoDato = s.tipo
-        if not s.inicializada:
-            self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
+        #if not s.inicializada:
+        #    self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
 
     def _tipar_op(self, nodo):
         op = nodo.valor
