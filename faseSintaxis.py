@@ -531,6 +531,7 @@ class Parser:
             self.consumir(TokenType.bool_value)
             return NodoAST("bool", tok.lexema, tok.linea, tok.columna)
         elif self.es(TokenType.opNot):
+            tok = self.token_actual()
             self.consumir(TokenType.opNot)
             nodo = NodoAST("op", "!", tok.linea, tok.columna)
             nodo.agregar(self.componente())

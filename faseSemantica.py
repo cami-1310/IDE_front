@@ -57,6 +57,57 @@ class TablaSimbolos:
         for s in self.items():
             filas.append(f"{s.nombre:<10}{s.tipo:<8}{s.offset:<11}{', '.join(map(str, s.lineas))}")
         return "\n".join(filas)
+
+##tabla simbolos#########################################3
+NUMERICOS = ("int", "float")
+
+# (operador, tipo_izq, tipo_der) -> tipo_resultado
+# Cualquier combinación que no aparezca aquí es error.
+REGLAS_BINARIAS = {
+    # Suma
+    ("+", "int", "int"): "int",     ("+", "int", "float"): "float",
+    ("+", "float", "int"): "float", ("+", "float", "float"): "float",
+    # Resta
+    ("-", "int", "int"): "int",     ("-", "int", "float"): "float",
+    ("-", "float", "int"): "float", ("-", "float", "float"): "float",
+    # Multiplicación
+    ("*", "int", "int"): "int",     ("*", "int", "float"): "float",
+    ("*", "float", "int"): "float", ("*", "float", "float"): "float",
+    # División (int/int se trunca)
+    ("/", "int", "int"): "int",     ("/", "int", "float"): "float",
+    ("/", "float", "int"): "float", ("/", "float", "float"): "float",
+    # Módulo (solo enteros)
+    ("%", "int", "int"): "int",
+    # Potencia
+    ("^", "int", "int"): "int",     ("^", "int", "float"): "float",
+    ("^", "float", "int"): "float", ("^", "float", "float"): "float",
+    # Relacionales (solo numéricos) -> bool
+    ("<", "int", "int"): "bool",    ("<", "int", "float"): "bool",
+    ("<", "float", "int"): "bool",  ("<", "float", "float"): "bool",
+    ("<=", "int", "int"): "bool",   ("<=", "int", "float"): "bool",
+    ("<=", "float", "int"): "bool", ("<=", "float", "float"): "bool",
+    (">", "int", "int"): "bool",    (">", "int", "float"): "bool",
+    (">", "float", "int"): "bool",  (">", "float", "float"): "bool",
+    (">=", "int", "int"): "bool",   (">=", "int", "float"): "bool",
+    (">=", "float", "int"): "bool", (">=", "float", "float"): "bool",
+    # Igualdad (numéricos entre sí, o bool con bool) -> bool
+    ("==", "int", "int"): "bool",   ("==", "int", "float"): "bool",
+    ("==", "float", "int"): "bool", ("==", "float", "float"): "bool",
+    ("==", "bool", "bool"): "bool",
+    ("!=", "int", "int"): "bool",   ("!=", "int", "float"): "bool",
+    ("!=", "float", "int"): "bool", ("!=", "float", "float"): "bool",
+    ("!=", "bool", "bool"): "bool",
+    # Lógicos (solo bool) -> bool
+    ("&&", "bool", "bool"): "bool",
+    ("||", "bool", "bool"): "bool",
+}
+
+# (operador, tipo_operando) -> tipo de resultado
+REGLAS_UNARIAS = {
+    ("!", "bool"): "bool",
+    ("++", "int"): "int",     ("++", "float"): "float",
+    ("--", "int"): "int",     ("--", "float"): "float",
+}
     
 class AnalizadorSemantico:
     def __init__(self, raiz):
@@ -72,13 +123,53 @@ class AnalizadorSemantico:
             pos = "L?:C?"
         self.errores.append(f"[Error semántico] {pos} -> {mensaje}")
  
+ #   def analizar(self):
+ #       if self.raiz is None:
+ #           return
+ #       for hijo in self.raiz.hijos:
+ #           if hijo.tipo == "ListaDeclaracion":
+ #               self.pasadaDeclaraciones(hijo)
+        # 2do recorrido (sentencias): tipos de expresiones y sentencias (Kim y Rafa)
+        
+# #-#####################################################################################################
+        #por mientras pa probar lo de tipado de rafa
     def analizar(self):
         if self.raiz is None:
             return
         for hijo in self.raiz.hijos:
             if hijo.tipo == "ListaDeclaracion":
                 self.pasadaDeclaraciones(hijo)
-        # 2do recorrido (sentencias): tipos de expresiones y sentencias (Kim y Rafa)
+            elif hijo.tipo == "ListaSentencias":
+                self._recorrido_prueba(hijo)     # PROVISIONAL
+#--------------------------------------------------------------------
+        # por mientrassssssssss borrar cuando este el recorrido de sentencias chido
+    def _recorrido_prueba(self, lista):
+        for s in lista.hijos:
+            if not s.hijos:
+                continue
+            t = s.tipo
+            if t == "Asignacion" and len(s.hijos) == 2:
+                self.tipar_expresion(s.hijos[1])               # primero la derecha
+                self.tabla.marcar_inicializada(s.hijos[0].valor)
+            elif t == "sent_in":
+                self.tabla.marcar_inicializada(s.hijos[0].valor)
+            elif t == "sent_out":
+                for h in s.hijos[0].hijos:
+                    if h.tipo != "cadena":
+                        self.tipar_expresion(h)
+            elif t == "Seleccion":
+                self.tipar_expresion(s.hijos[0])
+                for rama in s.hijos[1:]:
+                    for lista_ in rama.hijos:
+                        self._recorrido_prueba(lista_)
+            elif t == "Iteracion" and len(s.hijos) == 2:
+                self.tipar_expresion(s.hijos[0])
+                self._recorrido_prueba(s.hijos[1])
+            elif t == "Repeticion" and len(s.hijos) == 2:
+                self._recorrido_prueba(s.hijos[0])
+                self.tipar_expresion(s.hijos[1])
+#################################################################################################################
+
 
     # ── 1er recorrido: declaraciones ──────────────────────────────────────────────
     def pasadaDeclaraciones(self, lista):
@@ -101,3 +192,124 @@ class AnalizadorSemantico:
                     self.error(nodo_id,
                         f"La variable '{nombre}' ya fue declarada en la línea {previo.linea_decl}")
                     self.tabla.registrar_uso(nombre, nodo_id.lin)
+
+
+    def tipar_expresion(self, nodo):
+        """Anota tipoDato / valorCalc / conv y devuelve el tipoDato del nodo."""
+        if nodo is None:
+            return "error"
+        if nodo.tipo == "numero":
+            es_float = "." in nodo.valor
+            nodo.tipoDato = "float" if es_float else "int"
+            nodo.valorCalc = float(nodo.valor) if es_float else int(nodo.valor)
+        elif nodo.tipo == "bool":
+            nodo.tipoDato = "bool"
+            nodo.valorCalc = (nodo.valor == "true")
+        elif nodo.tipo == "id":
+            self._tipar_id(nodo)
+        elif nodo.tipo == "op":
+            self._tipar_op(nodo)
+        else:                       # nodo "error" del parser
+            nodo.tipoDato = "error"
+        return nodo.tipoDato
+
+    def _tipar_id(self, nodo):
+        nombre = nodo.valor
+        s = self.tabla.buscar(nombre)
+        if s is None:                                   #error 1
+            self.error(nodo, f"Identificador no declarado: '{nombre}'")
+            nodo.tipoDato = "error"
+            return
+        self.tabla.registrar_uso(nombre, nodo.lin)
+        nodo.tipoDato = s.tipo
+        if not s.inicializada:
+            self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
+
+    def _tipar_op(self, nodo):
+        op = nodo.valor
+        if len(nodo.hijos) == 1:
+            return self._tipar_unario(nodo, op)
+        izq, der = nodo.hijos
+        ti = self.tipar_expresion(izq)
+        td = self.tipar_expresion(der)
+        if "error" in (ti, td):                         # sin errores en cascada
+            nodo.tipoDato = "error"
+            return
+        res = REGLAS_BINARIAS.get((op, ti, td))
+        if res is None:
+            if op in ("==", "!="):                      # error 3
+                self.error(nodo, f"Incompatibilidad de tipos: no se puede comparar '{ti}' con '{td}' usando '{op}'")
+            else:                                       # error 5
+                self.error(nodo, self._msg_operador(op, ti, td))
+            nodo.tipoDato = "error"
+            return
+        if ti != td and ti in NUMERICOS and td in NUMERICOS:   # int mezclado con float
+            self.convertir_a(izq if ti == "int" else der, "float")
+        nodo.tipoDato = res
+        nodo.valorCalc = self._plegar(nodo, op, izq, der, res)
+
+    def _tipar_unario(self, nodo, op):
+        t = self.tipar_expresion(nodo.hijos[0])
+        if t == "error":
+            nodo.tipoDato = "error"
+            return
+        res = REGLAS_UNARIAS.get((op, t))
+        if res is None:                                 # error 5
+            self.error(nodo, f"Operador '{op}' no aplica a {t}")
+            nodo.tipoDato = "error"
+            return
+        nodo.tipoDato = res
+        v = nodo.hijos[0].valorCalc
+        if op == "!" and v is not None:
+            nodo.valorCalc = (not v)
+
+    def _msg_operador(self, op, ti, td):
+        if op == "%":
+            malo = "float" if "float" in (ti, td) else "bool"
+        elif op in ("&&", "||"):
+            malo = ti if ti != "bool" else td
+        else:
+            malo = "bool"
+        return f"Operador '{op}' no aplica a {malo}"
+
+    def convertir_a(self, nodo, destino):
+        if nodo is not None and nodo.tipoDato == "int" and destino == "float":
+            nodo.conv = "int→float"
+
+    def _plegar(self, nodo, op, izq, der, res):
+        # solo si los dos son constantes
+        a, b = izq.valorCalc, der.valorCalc
+        if op in ("/", "%") and b is not None and b == 0:
+            self.error(nodo, "División entre cero")
+            return None
+        if a is None or b is None:
+            return None
+        try:
+            if op == "+": r = a + b
+            elif op == "-": r = a - b
+            elif op == "*": r = a * b
+            elif op == "/":
+                if res == "int":                        # división con enteros truncada
+                    q = abs(a) // abs(b)
+                    r = q if (a < 0) == (b < 0) else -q
+                else:
+                    r = a / b
+            elif op == "%":
+                q = abs(a) // abs(b)
+                q = q if (a < 0) == (b < 0) else -q
+                r = a - b * q
+            elif op == "^": r = a ** b
+            elif op == "<": return a < b
+            elif op == "<=": return a <= b
+            elif op == ">": return a > b
+            elif op == ">=": return a >= b
+            elif op == "==": return a == b
+            elif op == "!=": return a != b
+            elif op == "&&": return a and b
+            elif op == "||": return a or b
+            else: return None
+            if isinstance(r, complex):
+                return None
+            return int(r) if res == "int" else float(r)
+        except (ZeroDivisionError, OverflowError, ValueError):
+            return None
