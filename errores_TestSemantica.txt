@@ -5,4 +5,10 @@ Sin errores léxicos.
 Sin errores sintácticos.
 
 ******************* Errores semánticos *******************
-[Error semántico] L3:C5 -> La variable 'x' ya fue declarada en la línea 2
+[Error semántico] L4:C5 -> Identificador no declarado: 'suma'
+[Error semántico] L5:C5 -> Conversión no válida: no se puede asignar un valor float a la variable int 'x'
+[Error semántico] L14:C5 -> Conversión no válida: no se puede asignar un valor float a la variable int 'y'
+[Error semántico] L16:C9 -> Conversión no válida: no se puede asignar un valor float a la variable int 'y'
+[Error semántico] L29:C7 -> La variable 'c' se usa antes de inicializarla
+[Error semántico] L36:C13 -> Identificador no declarado: 'mas'
+[Error semántico] L42:C16 -> Identificador no declarado: 'mas'

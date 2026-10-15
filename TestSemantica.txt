@@ -22,7 +22,7 @@ main {
         end;
         y = y + 1;
     end;
-    //revisar este detalle de sintaxis
+    //cambios para la sintaxis
     //a++;
     //c--;
     a=a++;
@@ -35,6 +35,7 @@ main {
             cin >> x;
             mas = 36 / 7;
         end;
+    //cambios para la sintaxis
     //until y == 5
     while y == 5;
 
