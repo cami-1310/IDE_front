@@ -44,7 +44,9 @@ class RightPanel:
             borderwidth=0,
             bordercolor=TEMA_BG,   
             lightcolor=TEMA_BG,    
-            darkcolor=TEMA_BG
+            darkcolor=TEMA_BG,
+            focuscolor=TEMA_BG,
+            relief="flat"
         )
         style.map(
             "Dark.Treeview",
@@ -56,6 +58,9 @@ class RightPanel:
             background=TEMA_BG,
             foreground=TEMA_FG
         )
+        style.layout(
+            "Dark.Treeview", 
+            [("Treeview.treearea", {"sticky": "nswe"})])
         
         self.tab_sintactico = ttk.Treeview(self.frame_sintactico, style="Dark.Treeview", show="tree")
         self.tab_sintactico.column("#0", width=2000, stretch=False)
