@@ -74,6 +74,7 @@ class RightPanel:
         self.frame_semantico = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
         self.tab_semantico = ttk.Treeview(self.frame_semantico, style="Dark.Treeview", show="tree")
         self.tab_semantico.column("#0", width=2000, stretch=False)
+        self.tab_semantico.tag_configure("error", foreground="#ff5555")
         scroll_semantico = ttk.Scrollbar(
             self.frame_semantico,
             orient="vertical",
@@ -90,9 +91,24 @@ class RightPanel:
         self.tab_semantico.pack(side="left", fill="both", expand=True)
 
         # tab de la tabla de símbolos (fuente monoespaciada para alinear columnas)
-        self.tab_hash_table = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
+        self.frame_hash_table = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
+        self.tab_hash_table = tk.Text(self.frame_hash_table, bg=TEMA_BG, fg=TEMA_FG,
                                     wrap=tk.NONE, relief=tk.FLAT, borderwidth=0,
                                     font=("Consolas", 10))
+        scroll_hash = ttk.Scrollbar(
+            self.frame_hash_table,
+            orient="vertical",
+            command=self.tab_hash_table.yview
+        )
+        scroll_hash_x = ttk.Scrollbar(
+            self.frame_hash_table,
+            orient="horizontal",
+            command=self.tab_hash_table.xview
+        )
+        self.tab_hash_table.configure(yscrollcommand=scroll_hash.set, xscrollcommand=scroll_hash_x.set)
+        scroll_hash_x.pack(side="bottom", fill="x")
+        scroll_hash.pack(side="right", fill="y")
+        self.tab_hash_table.pack(side="left", fill="both", expand=True)
         
         # tabs que aun no se implementan
         self.tab_codigo_intermedio = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
@@ -102,7 +118,7 @@ class RightPanel:
         self.tabs_notebook.add(self.tab_lexico, text="Léxico")
         self.tabs_notebook.add(self.frame_sintactico, text="Sintáctico")
         self.tabs_notebook.add(self.frame_semantico, text="Semántico")
-        self.tabs_notebook.add(self.tab_hash_table, text="Tabla de Hash")
+        self.tabs_notebook.add(self.frame_hash_table, text="Tabla de Hash")
         self.tabs_notebook.add(self.tab_codigo_intermedio, text="Código Intermedio")
 
     def mostrar_analisis_lexico(self, contenido):
@@ -166,11 +182,15 @@ class RightPanel:
             texto += f"   (valor = {nodo.valorCalc})"
         if nodo.conv is not None:
             texto += f"   (conv: {nodo.conv})"
+        # los nodos donde se detectó (o propagó) un error se pintan en rojo
+        en_error = nodo.tipoDato == "error" or getattr(nodo, "conError", False)
+        tags = ("error",) if en_error else ()
         item = self.tab_semantico.insert(
             padre,
             "end",
             text=texto,
-            open=True
+            open=True,
+            tags=tags
         )
         for hijo in nodo.hijos:
             self.insertar_nodo_anotado(item, hijo)
