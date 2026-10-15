@@ -138,7 +138,7 @@ class RightPanel:
         self.tab_lexico.delete('1.0', tk.END)
         self.tab_lexico.config(state='disabled')
 
-    #funcion que mostrará el AST
+    # función que mostrará el AST
     def mostrar_analisis_sintactico(self, raiz):
         self.tab_sintactico.delete(
             *self.tab_sintactico.get_children()
@@ -164,7 +164,7 @@ class RightPanel:
         for hijo in nodo.hijos:
             self.insertar_nodo_ast(item, hijo)
 
-    # metodos para mostrar el AST anotdado y la tabla de simbolos
+    # métodos para mostrar el AST anotdado
     def mostrar_analisis_semantico(self, raiz):
         self.tab_semantico.delete(
             *self.tab_semantico.get_children()
@@ -200,6 +200,7 @@ class RightPanel:
         for hijo in nodo.hijos:
             self.insertar_nodo_anotado(item, hijo)
 
+    # métodos para mostrar la tabla de símbolos
     def mostrar_tabla_simbolos(self, contenido):
         self.tab_hash_table.config(state='normal')
         self.tab_hash_table.delete('1.0', tk.END)

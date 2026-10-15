@@ -3,8 +3,8 @@ class Simbolo:
         self.nombre = nombre
         self.tipo = tipo                  
         self.linea_decl = linea_decl
-        self.lineas = [linea_decl]        # declaracion + usos
-        self.offset = offset              # desplazamiento de memoria
+        self.lineas = [linea_decl]    # declaracion + usos
+        self.offset = offset          # desplazamiento de memoria
         self.inicializada = False
 
 class TablaSimbolos:
@@ -12,7 +12,7 @@ class TablaSimbolos:
     TAMANOS = {"int": 1, "float": 1, "bool": 1}
 
     def __init__(self):
-        self.simbolos = {}                # diccionario: nombre -> Simbolo
+        self.simbolos = {} # diccionario: nombre -> Simbolo
         self.siguiente_offset = 0
 
     def declarar(self, nombre, tipo, linea):
@@ -58,7 +58,7 @@ class TablaSimbolos:
             filas.append(f"{s.nombre:<10}{s.tipo:<8}{s.offset:<11}{', '.join(map(str, s.lineas))}")
         return "\n".join(filas)
 
-##tabla simbolos#########################################3
+##tabla simbolos#########################################
 NUMERICOS = ("int", "float")
 
 # (operador, tipo_izq, tipo_der) -> tipo_resultado
@@ -111,14 +111,15 @@ REGLAS_UNARIAS = {
     
 class AnalizadorSemantico:
     def __init__(self, raiz):
-        self.original = raiz            # AST original (tab "Sintáctico")
-        self.raiz = raiz.copiar() if raiz is not None else None   # copia que se va a anotar (tab "Semántico")
+        self.original = raiz # AST original (tab "Sintáctico")
+        self.raiz = raiz.copiar() if raiz is not None else None # copia que se va a anotar (tab "Semántico")
         self.tabla = TablaSimbolos()
         self.errores = []
 
     def error(self, nodo, mensaje):
         if nodo is not None:
-            nodo.conError = True        # el nodo causó un error (aunque su tipo sea válido)
+            # el nodo causó un error (aunque su tipo sea válido)
+            nodo.conError = True 
         if nodo is not None and nodo.lin is not None:
             pos = f"L{nodo.lin}:C{nodo.col}"
             orden = (nodo.lin, nodo.col)
@@ -169,7 +170,8 @@ class AnalizadorSemantico:
         te = self.tipar_expresion(expr)
         nombre = nodo_id.valor
         s = self.tabla.buscar(nombre)
-        if s is None:                                   # error 1
+        if s is None:                                   
+            # error 1
             self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
             nodo_id.tipoDato = "error"
             nodo.tipoDato = "error"
@@ -177,27 +179,32 @@ class AnalizadorSemantico:
         self.tabla.registrar_uso(nombre, nodo_id.lin)
         nodo_id.tipoDato = s.tipo
         self.tabla.marcar_inicializada(nombre)
-        if te == "error":                               # sin errores en cascada
+        if te == "error":                               
+            # sin errores en cascada
             nodo.tipoDato = "error"
             return
         if s.tipo == te:
             nodo.tipoDato = s.tipo
             nodo.valorCalc = expr.valorCalc
-        elif s.tipo == "float" and te == "int":         # float = int se acepta
+        elif s.tipo == "float" and te == "int":         
+            # float = int se acepta
             self.convertir_a(expr, "float")
             nodo.tipoDato = "float"
             if expr.valorCalc is not None:
                 nodo.valorCalc = float(expr.valorCalc)
-        elif s.tipo == "int" and te == "float":         # error 4
+        elif s.tipo == "int" and te == "float":         
+            # error 4
             self.error(nodo, f"Conversión no válida: no se puede asignar un valor float a la variable int '{nombre}'")
             nodo.tipoDato = "error"
-        else:                                           # error 3/6
+        else:                                           
+            # error 3/6
             self.error(nodo, f"Incompatibilidad de tipos en asignación: '{nombre}' es {s.tipo} y la expresión es {te}")
             nodo.tipoDato = "error"
 
     def _condicion(self, nodo, cond, estructura):
         tc = self.tipar_expresion(cond)
-        if tc not in ("bool", "error"):                 # error 7
+        if tc not in ("bool", "error"):                 
+            # error 7
             self.error(cond, f"La condición del {estructura} debe ser bool, pero es {tc}")
             nodo.tipoDato = "error"
 
@@ -205,7 +212,8 @@ class AnalizadorSemantico:
         if not nodo.hijos:
             return
         self._condicion(nodo, nodo.hijos[0], "if")
-        for rama in nodo.hijos[1:]:                     # then / else
+        for rama in nodo.hijos[1:]:                     
+            # then / else
             for lista in rama.hijos:
                 self.visitar_sentencias(lista)
 
@@ -230,7 +238,8 @@ class AnalizadorSemantico:
         nodo_id = nodo.hijos[0]
         nombre = nodo_id.valor
         s = self.tabla.buscar(nombre)
-        if s is None:                                   # error 1
+        if s is None:                                   
+            # error 1
             self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
             nodo_id.tipoDato = "error"
             return
@@ -241,7 +250,8 @@ class AnalizadorSemantico:
     def _sent_out(self, nodo):
         if not nodo.hijos:
             return
-        for h in nodo.hijos[0].hijos:                   # hijos de Salida
+        for h in nodo.hijos[0].hijos:                   
+            # hijos de Salida
             if h.tipo == "cadena":
                 h.tipoDato = "cadena"
                 continue
@@ -271,7 +281,6 @@ class AnalizadorSemantico:
                         f"La variable '{nombre}' ya fue declarada en la línea {previo.linea_decl}")
                     self.tabla.registrar_uso(nombre, nodo_id.lin)
 
-
     def tipar_expresion(self, nodo):
         """Anota tipoDato / valorCalc / conv y devuelve el tipoDato del nodo."""
         if nodo is None:
@@ -287,14 +296,16 @@ class AnalizadorSemantico:
             self._tipar_id(nodo)
         elif nodo.tipo == "op":
             self._tipar_op(nodo)
-        else:                       # nodo "error" del parser
+        else:                       
+            # nodo "error" del parser
             nodo.tipoDato = "error"
         return nodo.tipoDato
 
     def _tipar_id(self, nodo):
         nombre = nodo.valor
         s = self.tabla.buscar(nombre)
-        if s is None:                                   #error 1
+        if s is None:                                   
+            #error 1
             self.error(nodo, f"Identificador no declarado: '{nombre}'")
             nodo.tipoDato = "error"
             return
@@ -310,18 +321,22 @@ class AnalizadorSemantico:
         izq, der = nodo.hijos
         ti = self.tipar_expresion(izq)
         td = self.tipar_expresion(der)
-        if "error" in (ti, td):                         # sin errores en cascada
+        if "error" in (ti, td):                         
+            # sin errores en cascada
             nodo.tipoDato = "error"
             return
         res = REGLAS_BINARIAS.get((op, ti, td))
         if res is None:
-            if op in ("==", "!="):                      # error 3
+            if op in ("==", "!="):                      
+                # error 3
                 self.error(nodo, f"Incompatibilidad de tipos: no se puede comparar '{ti}' con '{td}' usando '{op}'")
-            else:                                       # error 5
+            else:                                       
+                # error 5
                 self.error(nodo, self._msg_operador(op, ti, td))
             nodo.tipoDato = "error"
             return
-        if ti != td and ti in NUMERICOS and td in NUMERICOS:   # int mezclado con float
+        if ti != td and ti in NUMERICOS and td in NUMERICOS:   
+            # int mezclado con float
             self.convertir_a(izq if ti == "int" else der, "float")
         nodo.tipoDato = res
         nodo.valorCalc = self._plegar(nodo, op, izq, der, res)
@@ -332,7 +347,8 @@ class AnalizadorSemantico:
             nodo.tipoDato = "error"
             return
         res = REGLAS_UNARIAS.get((op, t))
-        if res is None:                                 # error 5
+        if res is None:                                 
+            # error 5
             self.error(nodo, f"Operador '{op}' no aplica a {t}")
             nodo.tipoDato = "error"
             return
@@ -367,7 +383,8 @@ class AnalizadorSemantico:
             elif op == "-": r = a - b
             elif op == "*": r = a * b
             elif op == "/":
-                if res == "int":                        # división con enteros truncada
+                if res == "int":                        
+                    # división con enteros truncada
                     q = abs(a) // abs(b)
                     r = q if (a < 0) == (b < 0) else -q
                 else:
