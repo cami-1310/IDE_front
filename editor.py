@@ -305,10 +305,11 @@ class IDEEditor(tk.Tk):
             time.sleep(0.05)
 
     def _on_closing(self):
+        if not self.menu.salirIDE():
+            return 
         self._actualizar_activo = False
         if hasattr(self, '_hilo_actualizar'):
             self._hilo_actualizar.join(timeout=1)
-        self.menu.salirIDE()
         self.destroy()
 
 if __name__ == "__main__":

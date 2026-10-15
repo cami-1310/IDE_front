@@ -28,7 +28,8 @@ class RightPanel:
         # Crear los tabs
         # tab que mostrará el analisis lexico
         self.tab_lexico = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
-                                     wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
+                                     wrap=tk.WORD, relief=tk.FLAT, borderwidth=0,
+                                     padx=10, pady=10)
         
         # tab que mostrará el analisis sintactico
         self.frame_sintactico = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
@@ -40,7 +41,10 @@ class RightPanel:
             background=TEMA_BG,
             foreground=TEMA_FG,
             fieldbackground=TEMA_BG,
-            borderwidth=0
+            borderwidth=0,
+            bordercolor=TEMA_BG,   
+            lightcolor=TEMA_BG,    
+            darkcolor=TEMA_BG
         )
         style.map(
             "Dark.Treeview",
@@ -68,7 +72,7 @@ class RightPanel:
         self.tab_sintactico.configure(yscrollcommand=scroll_sintactico.set, xscrollcommand=scroll_sintactico_x.set)
         scroll_sintactico_x.pack(side="bottom", fill="x")
         scroll_sintactico.pack(side="right", fill="y")
-        self.tab_sintactico.pack(side="left", fill="both", expand=True)
+        self.tab_sintactico.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # tab que mostrará el árbol anotado (análisis semántico)
         self.frame_semantico = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
@@ -88,13 +92,13 @@ class RightPanel:
         self.tab_semantico.configure(yscrollcommand=scroll_semantico.set, xscrollcommand=scroll_semantico_x.set)
         scroll_semantico_x.pack(side="bottom", fill="x")
         scroll_semantico.pack(side="right", fill="y")
-        self.tab_semantico.pack(side="left", fill="both", expand=True)
+        self.tab_semantico.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         # tab de la tabla de símbolos (fuente monoespaciada para alinear columnas)
         self.frame_hash_table = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
         self.tab_hash_table = tk.Text(self.frame_hash_table, bg=TEMA_BG, fg=TEMA_FG,
                                     wrap=tk.NONE, relief=tk.FLAT, borderwidth=0,
-                                    font=("Consolas", 10))
+                                    font=("Consolas", 10), padx=10, pady=10)
         scroll_hash = ttk.Scrollbar(
             self.frame_hash_table,
             orient="vertical",
@@ -112,7 +116,8 @@ class RightPanel:
         
         # tabs que aun no se implementan
         self.tab_codigo_intermedio = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
-                                    wrap=tk.WORD, relief=tk.FLAT, borderwidth=0)
+                                    wrap=tk.WORD, relief=tk.FLAT, borderwidth=0,
+                                    padx=10, pady=10)
         
         # Agregar los tabs al notebook
         self.tabs_notebook.add(self.tab_lexico, text="Léxico")

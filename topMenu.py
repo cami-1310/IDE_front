@@ -51,7 +51,7 @@ class TopMenu:
         menu_archivo.add_command(label="Guardar", command=self.guardarArchivo)
         menu_archivo.add_command(label="Guardar como", command=self.guardarComo)
         menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir", command=self.salirIDE)
+        menu_archivo.add_command(label="Salir", command=self.root._on_closing)
 
         menu_compilar.add_command(label="Compilar", command=self.llamarCompilador)
         menu_compilar.add_separator()
@@ -153,9 +153,10 @@ class TopMenu:
             # se abre en modo escritura (w)
             with open(self.ruta_archivo, "w", encoding="utf-8") as archivo:
                 archivo.write(self.texto.get(1.0, "end-1c"))  # se escribe el archivo con el contenido del text area
+            return True
         else:
             # si no tiene ruta, hay que guardar como
-            self.guardarComo()
+            return self.guardarComo()
 
     def guardarComo(self):
         ruta = filedialog.asksaveasfilename(
@@ -173,7 +174,11 @@ class TopMenu:
             with open(ruta, "w", encoding="utf-8") as archivo:
                 archivo.write(self.texto.get(1.0, "end-1c"))
             self.ruta_archivo = ruta  # se guarda la nueva ruta
-
+            return True
+        
+        # el usuario cerró el diálogo sin elegir ubicación
+        return False
+        
     def leerArchivo(self, ruta):
         # intenta leer el archivo en base a varios encodings
         for enc in ("utf-8", "cp1252", "latin-1"):
@@ -188,12 +193,13 @@ class TopMenu:
     
     def salirIDE(self):
         resp = messagebox.askyesnocancel("Salir", "¿Deseas guardar antes de salir?")
-        if resp is True:
-            self.guardarArchivo()
-            self.root.quit()
-        elif resp is False:
-            self.root.quit()
-        # si no elige ninguna es porque dio cancelar
+        if resp is None:
+            # se eligió "Cancelar"
+            return False
+        if resp:
+            if not self.guardarArchivo():
+                return False
+        return True
 
     def limpiar_secciones(self):
         self.parser = None
