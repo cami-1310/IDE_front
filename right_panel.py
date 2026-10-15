@@ -91,9 +91,24 @@ class RightPanel:
         self.tab_semantico.pack(side="left", fill="both", expand=True)
 
         # tab de la tabla de símbolos (fuente monoespaciada para alinear columnas)
-        self.tab_hash_table = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
+        self.frame_hash_table = tk.Frame(self.tabs_notebook, bg=TEMA_BG)
+        self.tab_hash_table = tk.Text(self.frame_hash_table, bg=TEMA_BG, fg=TEMA_FG,
                                     wrap=tk.NONE, relief=tk.FLAT, borderwidth=0,
                                     font=("Consolas", 10))
+        scroll_hash = ttk.Scrollbar(
+            self.frame_hash_table,
+            orient="vertical",
+            command=self.tab_hash_table.yview
+        )
+        scroll_hash_x = ttk.Scrollbar(
+            self.frame_hash_table,
+            orient="horizontal",
+            command=self.tab_hash_table.xview
+        )
+        self.tab_hash_table.configure(yscrollcommand=scroll_hash.set, xscrollcommand=scroll_hash_x.set)
+        scroll_hash_x.pack(side="bottom", fill="x")
+        scroll_hash.pack(side="right", fill="y")
+        self.tab_hash_table.pack(side="left", fill="both", expand=True)
         
         # tabs que aun no se implementan
         self.tab_codigo_intermedio = tk.Text(self.tabs_notebook, bg=TEMA_BG, fg=TEMA_FG, 
@@ -103,7 +118,7 @@ class RightPanel:
         self.tabs_notebook.add(self.tab_lexico, text="Léxico")
         self.tabs_notebook.add(self.frame_sintactico, text="Sintáctico")
         self.tabs_notebook.add(self.frame_semantico, text="Semántico")
-        self.tabs_notebook.add(self.tab_hash_table, text="Tabla de Hash")
+        self.tabs_notebook.add(self.frame_hash_table, text="Tabla de Hash")
         self.tabs_notebook.add(self.tab_codigo_intermedio, text="Código Intermedio")
 
     def mostrar_analisis_lexico(self, contenido):
