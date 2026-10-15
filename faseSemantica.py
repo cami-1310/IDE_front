@@ -184,7 +184,6 @@ class AnalizadorSemantico:
         s = self.tabla.buscar(nombre)
 
         if s is None:
-            # Analizar la expresión para detectar sus errores
             self.tipar_expresion(expr)
             self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
             nodo_id.tipoDato = "error"
@@ -192,19 +191,18 @@ class AnalizadorSemantico:
             nodo.valorCalc = None
             return
 
-        # Calcular la expresión de la derecha
+        # Calcular y tipar la expresión de la derecha
         te = self.tipar_expresion(expr)
-
         self.tabla.registrar_uso(nombre, nodo_id.lin)
         nodo_id.tipoDato = s.tipo
-        self.tabla.marcar_inicializada(nombre)
+
+        # Expresión con error: propagar y no asignar
         if te == "error":                               
-            # sin errores en cascada
             nodo.tipoDato = "error"
             nodo.valorCalc = None
             return
 
-        # Comprobar tipos y convertir cuando sea necesario
+        # Comprobar compatibilidad de tipos
         if s.tipo == te:
             nodo.tipoDato = s.tipo
 
@@ -212,29 +210,28 @@ class AnalizadorSemantico:
             self.convertir_a(expr, "float")
             nodo.tipoDato = "float"
 
-            if expr.valorCalc is not None:
-                nodo.valorCalc = float(expr.valorCalc)
         elif s.tipo == "int" and te == "float":         
-            # error 4
             self.error(nodo, f"Conversión no válida: no se puede asignar un valor float a la variable int '{nombre}'")
             nodo.tipoDato = "error"
+            nodo.valorCalc = None
+            return  # <-- CORRECCIÓN: Salir sin asignar
+
         else:                                           
-            # error 3/6
             self.error(nodo, f"Incompatibilidad de tipos en asignación: '{nombre}' es {s.tipo} y la expresión es {te}")
             nodo.tipoDato = "error"
             nodo.valorCalc = None
-            return
+            return  # <-- Salir sin asignar
 
-        # Obtener el valor calculado
+        # Solo si los tipos son válidos se actualiza el estado de la variable
+        self.tabla.marcar_inicializada(nombre)
         valor = expr.valorCalc
 
-        # Guardar en la variable destino
+        if s.tipo == "float" and te == "int" and valor is not None:
+            valor = float(valor)
+
         s.valor = valor
-        s.inicializada = True
-
         nodo.valorCalc = valor
-        nodo_id.valorCalc=valor
-
+        nodo_id.valorCalc = valor
 
     def _condicion(self, nodo, cond, estructura):
         tc = self.tipar_expresion(cond)
