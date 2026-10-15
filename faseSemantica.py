@@ -6,6 +6,7 @@ class Simbolo:
         self.lineas = [linea_decl]        # declaracion + usos
         self.offset = offset              # desplazamiento de memoria
         self.inicializada = False
+        self.valor = None#para no perder el valor
 
 class TablaSimbolos:
     # bytes que ocupa cada tipo (para calcular el desplazamiento)
@@ -53,9 +54,19 @@ class TablaSimbolos:
         return list(self.simbolos.values())
 
     def a_texto(self):
-        filas = [f"{'Nombre':<10}{'Tipo':<8}{'Dirección':<11}Líneas"]
+        filas = [
+            f"{'Nombre':<10}{'Tipo':<8}"
+            f"{'Dirección':<11}{'Valor':<12}Líneas"
+        ]
+
         for s in self.items():
-            filas.append(f"{s.nombre:<10}{s.tipo:<8}{s.offset:<11}{', '.join(map(str, s.lineas))}")
+            valor = s.valor if s.valor is not None else "?"
+            filas.append(
+                f"{s.nombre:<10}{s.tipo:<8}"
+                f"{s.offset:<11}{str(valor):<12}"
+                f"{', '.join(map(str, s.lineas))}"
+            )
+
         return "\n".join(filas)
 
 ##tabla simbolos#########################################3
@@ -164,36 +175,74 @@ class AnalizadorSemantico:
     def _asignacion(self, nodo):
         if len(nodo.hijos) < 2:
             return
+
         nodo_id, expr = nodo.hijos[0], nodo.hijos[1]
-        # primero se analiza la derecha, después se inicializa la izquierda
-        te = self.tipar_expresion(expr)
         nombre = nodo_id.valor
+
+        # Buscar la variable destino
         s = self.tabla.buscar(nombre)
-        if s is None:                                   # error 1
+
+        if s is None:
+            # Analizar la expresión para detectar sus errores
+            self.tipar_expresion(expr)
             self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
             nodo_id.tipoDato = "error"
             nodo.tipoDato = "error"
+            nodo.valorCalc = None
             return
+
+        # Calcular la expresión de la derecha
+        te = self.tipar_expresion(expr)
+
         self.tabla.registrar_uso(nombre, nodo_id.lin)
         nodo_id.tipoDato = s.tipo
-        self.tabla.marcar_inicializada(nombre)
-        if te == "error":                               # sin errores en cascada
+
+        if te == "error":
             nodo.tipoDato = "error"
+            nodo.valorCalc = None
             return
+
+        # Comprobar tipos y convertir cuando sea necesario
         if s.tipo == te:
             nodo.tipoDato = s.tipo
-            nodo.valorCalc = expr.valorCalc
-        elif s.tipo == "float" and te == "int":         # float = int se acepta
+
+        elif s.tipo == "float" and te == "int":
             self.convertir_a(expr, "float")
             nodo.tipoDato = "float"
+
             if expr.valorCalc is not None:
-                nodo.valorCalc = float(expr.valorCalc)
-        elif s.tipo == "int" and te == "float":         # error 4
-            self.error(nodo, f"Conversión no válida: no se puede asignar un valor float a la variable int '{nombre}'")
+                expr.valorCalc = float(expr.valorCalc)
+
+        elif s.tipo == "int" and te == "float":
+            self.error(
+                nodo,
+                f"Conversión no válida: no se puede asignar un "
+                f"valor float a la variable int '{nombre}'"
+            )
             nodo.tipoDato = "error"
-        else:                                           # error 3/6
-            self.error(nodo, f"Incompatibilidad de tipos en asignación: '{nombre}' es {s.tipo} y la expresión es {te}")
+            nodo.valorCalc = None
+            return
+
+        else:
+            self.error(
+                nodo,
+                f"Incompatibilidad de tipos en asignación: "
+                f"'{nombre}' es {s.tipo} y la expresión es {te}"
+            )
             nodo.tipoDato = "error"
+            nodo.valorCalc = None
+            return
+
+        # Obtener el valor calculado
+        valor = expr.valorCalc
+
+        # GUARDAR EN LA VARIABLE DESTINO
+        s.valor = valor
+        s.inicializada = True
+
+        nodo.valorCalc = valor
+        nodo_id.valorCalc=valor
+
 
     def _condicion(self, nodo, cond, estructura):
         tc = self.tipar_expresion(cond)
@@ -294,25 +343,40 @@ class AnalizadorSemantico:
     def _tipar_id(self, nodo):
         nombre = nodo.valor
         s = self.tabla.buscar(nombre)
-        if s is None:                                   #error 1
+
+        if s is None:
             self.error(nodo, f"Identificador no declarado: '{nombre}'")
             nodo.tipoDato = "error"
+            nodo.valorCalc = None
             return
+
         self.tabla.registrar_uso(nombre, nodo.lin)
         nodo.tipoDato = s.tipo
-        if not s.inicializada:
-            self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
+
+#        if not s.inicializada:
+#            self.error(
+#                nodo,
+#                f"La variable '{nombre}' se usa antes de inicializarla"
+#            )
+#            nodo.valorCalc = None
+#            return
+
+        nodo.valorCalc = s.valor
 
     def _tipar_op(self, nodo):
         op = nodo.valor
         if len(nodo.hijos) == 1:
             return self._tipar_unario(nodo, op)
+
         izq, der = nodo.hijos
         ti = self.tipar_expresion(izq)
         td = self.tipar_expresion(der)
+
         if "error" in (ti, td):                         # sin errores en cascada
             nodo.tipoDato = "error"
-            return
+            nodo.valorCalc = None
+            return "error"
+
         res = REGLAS_BINARIAS.get((op, ti, td))
         if res is None:
             if op in ("==", "!="):                      # error 3
@@ -320,26 +384,57 @@ class AnalizadorSemantico:
             else:                                       # error 5
                 self.error(nodo, self._msg_operador(op, ti, td))
             nodo.tipoDato = "error"
-            return
+            nodo.valorCalc = None
+            return "error"
+
         if ti != td and ti in NUMERICOS and td in NUMERICOS:   # int mezclado con float
             self.convertir_a(izq if ti == "int" else der, "float")
+
         nodo.tipoDato = res
         nodo.valorCalc = self._plegar(nodo, op, izq, der, res)
+        return nodo.tipoDato
 
     def _tipar_unario(self, nodo, op):
-        t = self.tipar_expresion(nodo.hijos[0])
+        hijo = nodo.hijos[0]
+        t = self.tipar_expresion(hijo)
+
         if t == "error":
             nodo.tipoDato = "error"
-            return
+            nodo.valorCalc = None
+            return "error"
+
         res = REGLAS_UNARIAS.get((op, t))
         if res is None:                                 # error 5
             self.error(nodo, f"Operador '{op}' no aplica a {t}")
             nodo.tipoDato = "error"
-            return
+            nodo.valorCalc = None
+            return "error"
+
         nodo.tipoDato = res
-        v = nodo.hijos[0].valorCalc
+        v = hijo.valorCalc
+
+        # 1. Negación lógica
         if op == "!" and v is not None:
             nodo.valorCalc = (not v)
+
+        # 2. Operadores postfijo (++, --)
+        elif op in ("++", "--") and v is not None:
+            # En postfijo la expresión devuelve el valor antes del cambio
+            
+
+            # Actualizar el valor de la variable en la tabla de símbolos
+            nombre_var = getattr(hijo, "valor", None)
+            if nombre_var:
+                simbolo = self.tabla.buscar(nombre_var)
+                if simbolo is not None:
+                    paso = 1.0 if res == "float" else 1
+                    simbolo.valor = (v + paso) if op == "++" else (v - paso)
+
+                    nodo.valorCalc = simbolo.valor
+        else:
+            nodo.valorCalc = None
+
+        return nodo.tipoDato
 
     def _msg_operador(self, op, ti, td):
         if op == "%":
