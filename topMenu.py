@@ -15,10 +15,13 @@ class TopMenu:
         self.ruta_archivo = None
         self.scanner = Token(self.root, self.texto, self.bottom_panel)  # para poder llamar a getToken
         self.tokens = []
-        self.parser = Parser(self.tokens)
+        self.parser = None  # se crea al ejecutar el análisis sintáctico
         self.ruta_archivoTokens = None
         self.ruta_archivoErrores = None
         self.contenido_errores = ""
+        # contenido del archivo de errores hasta cada fase, para no duplicar secciones al re-ejecutar
+        self.errores_hasta_lexico = ""
+        self.errores_hasta_sintactico = ""
         self.contenido_tokens = ""
         self.crear_menu()
         self.crear_toolbar()
@@ -193,18 +196,23 @@ class TopMenu:
         # si no elige ninguna es porque dio cancelar
 
     def limpiar_secciones(self):
+        self.parser = None
         if self.bottom_panel:
             self.bottom_panel.clean_errores_lexicos()
             self.bottom_panel.clean_errores_sintacticos()
+            self.bottom_panel.clean_errores_semanticos()
         if self.right_panel:
             self.right_panel.clean_analisis_lexico()
             self.right_panel.clean_analisis_sintactico()
+            self.right_panel.clean_analisis_semantico()
+            self.right_panel.clean_tabla_simbolos()
 
     # funciones del menu de compilador ----------------------------------------------------------------------------
     def llamarCompilador(self):
         self.mostrarAnalisisLexico()
-        self.mostrarAnalisisSintactico()
-        self.mostrarAnalisisSemantico()
+        # el semántico solo corre si el sintáctico generó un AST nuevo
+        if self.mostrarAnalisisSintactico():
+            self.mostrarAnalisisSemantico()
 
     def mostrarAnalisisLexico(self):
         # limpiar antes del analisis
@@ -214,6 +222,8 @@ class TopMenu:
             self.right_panel.clean_analisis_lexico()
         self.scanner.errores.clear()
         self.scanner.cargarCodigo()
+        # el código pudo cambiar, el AST anterior ya no es válido
+        self.parser = None
 
         self.contenido_tokens = ""
         self.contenido_errores = ""
@@ -241,6 +251,7 @@ class TopMenu:
                 self.contenido_errores += str(error) + "\n"
         else:
             self.contenido_errores += "Sin errores léxicos.\n"
+        self.errores_hasta_lexico = self.contenido_errores
 
         # construimos ruta para los archivos que resultan del analisis
         # solo si el archivo tine ruta, es decir existe en el disco
@@ -300,27 +311,28 @@ class TopMenu:
                 "Debes guardar el archivo antes de ejecutar el análisis sintáctico."
             )
             self.guardarComo()
-            return
-        
+            return False
+
         if not self.ruta_archivoTokens:
             messagebox.showwarning(
                 "Análisis léxico requerido",
                 "Primero debes ejecutar el análisis léxico."
             )
-            return
-        
+            return False
+
         if not os.path.exists(self.ruta_archivoTokens):
             messagebox.showwarning(
                 "Archivo de tokens no encontrado",
                 "Ejecuta nuevamente el análisis léxico."
             )
-            return
-        
+            return False
+
         # leer los tokens
         self.tokens = self.cargarTokens(self.ruta_archivoTokens)
         self.parser = Parser(self.tokens)
         self.parser.programa()
 
+        self.contenido_errores = self.errores_hasta_lexico
         self.contenido_errores += "\n******************* Errores sintácticos *******************\n"
         # para el manejo de errores
         if self.parser.errores:
@@ -328,6 +340,7 @@ class TopMenu:
                 self.contenido_errores += str(error) + "\n"
         else:
             self.contenido_errores += "Sin errores sintácticos.\n"
+        self.errores_hasta_sintactico = self.contenido_errores
 
         # tras recuperar los errores, se guardan en el archivo de errores
         # que ya se habia creado con anterioridad y donde ya exisen los errores lexicos
@@ -359,6 +372,7 @@ class TopMenu:
             self.bottom_panel.tabs_notebook.select(
                 self.bottom_panel.tab_errores_sintacticos
             )
+        return True
 
     def mostrarAnalisisSemantico(self):
          # limpiar seccion antes del analisis
@@ -368,19 +382,27 @@ class TopMenu:
             self.right_panel.clean_analisis_semantico()
             self.right_panel.clean_tabla_simbolos()
 
-        # solo se analiza si las fases anteriores terminaron sin errores
-        parser = getattr(self, "parser", None)
-        if self.scanner.errores or parser is None or parser.errores:
+        # se necesita un AST del código actual
+        if self.parser is None or self.parser.raiz is None:
             messagebox.showwarning(
-                "Análisis semántico",
-                "Corrige los errores léxicos y sintácticos antes de ejecutar el análisis semántico."
+                "Análisis sintáctico requerido",
+                "Primero debes ejecutar el análisis léxico y sintáctico."
             )
             return
 
-        self.semantico = AnalizadorSemantico(parser.raiz)
+        # solo se analiza si las fases anteriores terminaron sin errores
+        if self.scanner.errores or self.parser.errores:
+            if self.bottom_panel:
+                self.bottom_panel.add_error_semantico(
+                    "No se ejecutó el análisis semántico: corrige primero los errores léxicos y sintácticos.", 0)
+                self.bottom_panel.tabs_notebook.select(self.bottom_panel.tab_errores_semanticos)
+            return
+
+        self.semantico = AnalizadorSemantico(self.parser.raiz)
         self.semantico.analizar()
 
         # los errores se guardan en el archivo, igual que en las fases anteriores
+        self.contenido_errores = self.errores_hasta_sintactico
         self.contenido_errores += "\n******************* Errores semánticos *******************\n"
         if self.semantico.errores:
             for error in self.semantico.errores:

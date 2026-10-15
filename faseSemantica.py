@@ -112,16 +112,21 @@ REGLAS_UNARIAS = {
 class AnalizadorSemantico:
     def __init__(self, raiz):
         self.original = raiz            # AST original (tab "Sintáctico")
-        self.raiz = raiz.copiar()       # copia que se va a anotar (tab "Semántico")
+        self.raiz = raiz.copiar() if raiz is not None else None   # copia que se va a anotar (tab "Semántico")
         self.tabla = TablaSimbolos()
         self.errores = []
 
     def error(self, nodo, mensaje):
+        if nodo is not None:
+            nodo.conError = True        # el nodo causó un error (aunque su tipo sea válido)
         if nodo is not None and nodo.lin is not None:
             pos = f"L{nodo.lin}:C{nodo.col}"
+            orden = (nodo.lin, nodo.col)
         else:
             pos = "L?:C?"
-        self.errores.append(f"[Error semántico] {pos} -> {mensaje}")
+            orden = (float("inf"), 0)
+        # se guarda la posición para ordenar al final del análisis
+        self.errores.append((orden, f"[Error semántico] {pos} -> {mensaje}"))
  
     def analizar(self):
         if self.raiz is None:
@@ -129,8 +134,120 @@ class AnalizadorSemantico:
         for hijo in self.raiz.hijos:
             if hijo.tipo == "ListaDeclaracion":
                 self.pasadaDeclaraciones(hijo)
-        # 2do recorrido (sentencias): tipos de expresiones y sentencias (Kim y Rafa)
-        
+        # 2do recorrido (sentencias): tipos de expresiones y sentencias
+        for hijo in self.raiz.hijos:
+            if hijo.tipo == "ListaSentencias":
+                self.visitar_sentencias(hijo)
+        # errores en el orden en que aparecen en el código
+        self.errores.sort(key=lambda e: e[0])
+        self.errores = [msg for _, msg in self.errores]
+
+    # ── 2do recorrido: sentencias ─────────────────────────────────────────────────
+    def visitar_sentencias(self, lista):
+        if lista is None:
+            return
+        for s in lista.hijos:
+            t = s.tipo
+            if t == "Asignacion":
+                self._asignacion(s)
+            elif t == "Seleccion":
+                self._seleccion(s)
+            elif t == "Iteracion":
+                self._iteracion(s)
+            elif t == "Repeticion":
+                self._repeticion(s)
+            elif t == "sent_in":
+                self._sent_in(s)
+            elif t == "sent_out":
+                self._sent_out(s)
+
+    def _asignacion(self, nodo):
+        if len(nodo.hijos) < 2:
+            return
+        nodo_id, expr = nodo.hijos[0], nodo.hijos[1]
+        # primero se analiza la derecha, después se inicializa la izquierda
+        te = self.tipar_expresion(expr)
+        nombre = nodo_id.valor
+        s = self.tabla.buscar(nombre)
+        if s is None:                                   # error 1
+            self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
+            nodo_id.tipoDato = "error"
+            nodo.tipoDato = "error"
+            return
+        self.tabla.registrar_uso(nombre, nodo_id.lin)
+        nodo_id.tipoDato = s.tipo
+        self.tabla.marcar_inicializada(nombre)
+        if te == "error":                               # sin errores en cascada
+            nodo.tipoDato = "error"
+            return
+        if s.tipo == te:
+            nodo.tipoDato = s.tipo
+            nodo.valorCalc = expr.valorCalc
+        elif s.tipo == "float" and te == "int":         # float = int se acepta
+            self.convertir_a(expr, "float")
+            nodo.tipoDato = "float"
+            if expr.valorCalc is not None:
+                nodo.valorCalc = float(expr.valorCalc)
+        elif s.tipo == "int" and te == "float":         # error 4
+            self.error(nodo, f"Conversión no válida: no se puede asignar un valor float a la variable int '{nombre}'")
+            nodo.tipoDato = "error"
+        else:                                           # error 3/6
+            self.error(nodo, f"Incompatibilidad de tipos en asignación: '{nombre}' es {s.tipo} y la expresión es {te}")
+            nodo.tipoDato = "error"
+
+    def _condicion(self, nodo, cond, estructura):
+        tc = self.tipar_expresion(cond)
+        if tc not in ("bool", "error"):                 # error 7
+            self.error(cond, f"La condición del {estructura} debe ser bool, pero es {tc}")
+            nodo.tipoDato = "error"
+
+    def _seleccion(self, nodo):
+        if not nodo.hijos:
+            return
+        self._condicion(nodo, nodo.hijos[0], "if")
+        for rama in nodo.hijos[1:]:                     # then / else
+            for lista in rama.hijos:
+                self.visitar_sentencias(lista)
+
+    def _iteracion(self, nodo):
+        if not nodo.hijos:
+            return
+        self._condicion(nodo, nodo.hijos[0], "while")
+        if len(nodo.hijos) > 1:
+            self.visitar_sentencias(nodo.hijos[1])
+
+    def _repeticion(self, nodo):
+        if not nodo.hijos:
+            return
+        # el cuerpo aparece antes que la condición en el texto
+        self.visitar_sentencias(nodo.hijos[0])
+        if len(nodo.hijos) > 1:
+            self._condicion(nodo, nodo.hijos[1], "do-while")
+
+    def _sent_in(self, nodo):
+        if not nodo.hijos:
+            return
+        nodo_id = nodo.hijos[0]
+        nombre = nodo_id.valor
+        s = self.tabla.buscar(nombre)
+        if s is None:                                   # error 1
+            self.error(nodo_id, f"Identificador no declarado: '{nombre}'")
+            nodo_id.tipoDato = "error"
+            return
+        self.tabla.registrar_uso(nombre, nodo_id.lin)
+        nodo_id.tipoDato = s.tipo
+        self.tabla.marcar_inicializada(nombre)
+
+    def _sent_out(self, nodo):
+        if not nodo.hijos:
+            return
+        for h in nodo.hijos[0].hijos:                   # hijos de Salida
+            if h.tipo == "cadena":
+                h.tipoDato = "cadena"
+                continue
+            t = self.tipar_expresion(h)
+            if t not in ("int", "float", "bool", "error"):
+                self.error(h, f"No se puede imprimir una expresión de tipo {t}")
 
     # ── 1er recorrido: declaraciones ──────────────────────────────────────────────
     def pasadaDeclaraciones(self, lista):
@@ -183,8 +300,8 @@ class AnalizadorSemantico:
             return
         self.tabla.registrar_uso(nombre, nodo.lin)
         nodo.tipoDato = s.tipo
-        #if not s.inicializada:
-        #    self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
+        if not s.inicializada:
+            self.error(nodo, f"La variable '{nombre}' se usa antes de inicializarla")
 
     def _tipar_op(self, nodo):
         op = nodo.valor
