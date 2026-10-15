@@ -6,7 +6,7 @@ class Simbolo:
         self.lineas = [linea_decl]    # declaracion + usos
         self.offset = offset          # desplazamiento de memoria
         self.inicializada = False
-        self.valor = None#para no perder el valor
+        self.valor = None             #para no perder el valor
 
 class TablaSimbolos:
     # bytes que ocupa cada tipo (para calcular el desplazamiento)
@@ -228,7 +228,7 @@ class AnalizadorSemantico:
         # Obtener el valor calculado
         valor = expr.valorCalc
 
-        # GUARDAR EN LA VARIABLE DESTINO
+        # Guardar en la variable destino
         s.valor = valor
         s.inicializada = True
 
@@ -317,7 +317,7 @@ class AnalizadorSemantico:
                     self.tabla.registrar_uso(nombre, nodo_id.lin)
 
     def tipar_expresion(self, nodo):
-        """Anota tipoDato / valorCalc / conv y devuelve el tipoDato del nodo."""
+        # Anota tipoDato / valorCalc / conv y devuelve el tipoDato del nodo
         if nodo is None:
             return "error"
         if nodo.tipo == "numero":
@@ -419,7 +419,6 @@ class AnalizadorSemantico:
         # 2. Operadores postfijo (++, --)
         elif op in ("++", "--") and v is not None:
             # En postfijo la expresión devuelve el valor antes del cambio
-            
 
             # Actualizar el valor de la variable en la tabla de símbolos
             nombre_var = getattr(hijo, "valor", None)
